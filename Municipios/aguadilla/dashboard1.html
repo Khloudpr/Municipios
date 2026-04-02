@@ -347,11 +347,22 @@
     </button>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
 let allReportes=[],filteredReportes=[],currentPeriod=7,chartEstatus,chartCategorias,chartTendencia,chartType='bar',focusMode=false,notifications=[],currentReporteId=null;
 
-window.onload=()=>{verificarSesion();fetchDashboardData();setupFilters();setupKeyboardShortcuts();loadNotifications();updateRecentActivity()};
+window.onload=()=>{
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  verificarSesion();
+  fetchDashboardData();
+  setupFilters();
+  setupKeyboardShortcuts();
+  loadNotifications();
+  updateRecentActivity();
+};
 
 
         // Permission check
@@ -389,61 +400,30 @@ function executeCommand(el){const action=el.dataset.action;if(window.commandActi
 function toggleFocusMode(){focusMode=!focusMode;document.body.classList.toggle('focus-mode')}
 
 function loadNotifications(){
-    // Generate notifications based on real data
     notifications = [];
-    
     if (allReportes && allReportes.length > 0) {
-        // Check for new reports (last 24 hours)
         const ahora = new Date();
         const hace24h = new Date(ahora - 24*60*60*1000);
-        
         const nuevos = allReportes.filter(r => {
-            const fecha = new Date(r.fecha);
-            return fecha >= hace24h && r.estatus === 'Nuevo';
+            const fecha = new Date(r.fecha_creacion);
+            return fecha >= hace24h && r.estatus === 'nuevo';
         });
-        
         if (nuevos.length > 0) {
-            const ultimoNuevo = nuevos[0];
-            const tiempoDesde = calcularTiempoDesde(ultimoNuevo.fecha);
-            notifications.push({
-                id: 1,
-                text: `Nuevo reporte: ${ultimoNuevo.categoría || ultimoNuevo.categoria}`,
-                time: tiempoDesde,
-                unread: true
-            });
+            notifications.push({id:1, text:`Nuevo reporte: ${nuevos[0].categoria}`, time:calcularTiempoDesde(nuevos[0].fecha_creacion), unread:true});
         }
-        
-        // Check for high priority reports
-        const altaPrioridad = allReportes.filter(r => 
-            r.prioridad === 'Alta' && r.estatus !== 'Completado'
-        );
-        
+        const altaPrioridad = allReportes.filter(r => ['Alta','alta'].includes(r.prioridad) && r.estatus !== 'resuelto');
         if (altaPrioridad.length > 0) {
-            notifications.push({
-                id: 2,
-                text: `${altaPrioridad.length} reporte${altaPrioridad.length > 1 ? 's' : ''} de alta prioridad`,
-                time: 'Pendiente',
-                unread: true
-            });
+            notifications.push({id:2, text:`${altaPrioridad.length} reporte${altaPrioridad.length>1?'s':''} de alta prioridad`, time:'Pendiente', unread:true});
         }
-        
-        // Check for old reports (>7 days)
         const hace7dias = new Date(ahora - 7*24*60*60*1000);
         const sinAtencion = allReportes.filter(r => {
-            const fecha = new Date(r.fecha);
-            return fecha < hace7dias && r.estatus !== 'Completado';
+            const fecha = new Date(r.fecha_creacion);
+            return fecha < hace7dias && r.estatus !== 'resuelto';
         });
-        
         if (sinAtencion.length > 0) {
-            notifications.push({
-                id: 3,
-                text: `${sinAtencion.length} reporte${sinAtencion.length > 1 ? 's' : ''} sin atención >7 días`,
-                time: 'Urgente',
-                unread: true
-            });
+            notifications.push({id:3, text:`${sinAtencion.length} reporte${sinAtencion.length>1?'s':''} sin atención >7 días`, time:'Urgente', unread:true});
         }
     }
-    
     updateNotificationBadge();
 }
 
@@ -468,63 +448,68 @@ function addToRecentActivity(id){const activity=(localStorage.getItem('recent_ac
 
 function setupFilters(){document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',function(){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');currentPeriod=this.dataset.period==='all'?9999:parseInt(this.dataset.period);processData(allReportes)}))}
 
-async function fetchDashboardData(){const syncIcon=document.getElementById('sync-icon');syncIcon.classList.add('fa-spin');try{console.log('Fetching data from:', SCRIPT_URL);const res=await fetch(SCRIPT_URL);allReportes=await res.json();console.log('Total reportes recibidos:', allReportes.length);console.log('Primer reporte:', allReportes[0]);const ahora=new Date(),horaStr=ahora.getHours()+":"+ahora.getMinutes().toString().padStart(2,'0');document.getElementById('last-sync').innerText=horaStr;processData(allReportes)}catch(e){console.error("Error completo:",e);alert('Error al cargar datos: '+e.message)}finally{syncIcon.classList.remove('fa-spin')}}
+async function fetchDashboardData(){
+  const syncIcon=document.getElementById('sync-icon');
+  syncIcon.classList.add('fa-spin');
+  try{
+    const {data, error} = await sb.from('reportes').select('*').order('fecha_creacion', {ascending: false});
+    if(error) throw error;
+    allReportes = data || [];
+    const ahora=new Date(),horaStr=ahora.getHours()+":"+ahora.getMinutes().toString().padStart(2,'0');
+    document.getElementById('last-sync').innerText=horaStr;
+    processData(allReportes);
+  }catch(e){
+    console.error("Error completo:",e);
+    alert('Error al cargar datos: '+e.message);
+  }finally{
+    syncIcon.classList.remove('fa-spin');
+  }
+}
 
-function filterByPeriod(reportes){if(currentPeriod===9999)return reportes;const ahora=new Date(),cutoffDate=new Date(ahora-(currentPeriod*24*60*60*1000));return reportes.filter(r=>{const fecha=new Date(r.fecha);return fecha>=cutoffDate})}
+function filterByPeriod(reportes){if(currentPeriod===9999)return reportes;const ahora=new Date(),cutoffDate=new Date(ahora-(currentPeriod*24*60*60*1000));return reportes.filter(r=>{const fecha=new Date(r.fecha_creacion);return fecha>=cutoffDate})}
 
-function processData(reportes){filteredReportes=filterByPeriod(reportes);const total=filteredReportes.length,resueltos=filteredReportes.filter(r=>r.estatus==='Completado').length,eficiencia=total>0?Math.round((resueltos/total)*100):0,revision=filteredReportes.filter(r=>r.estatus==='En Revisión').length,urgentes=filteredReportes.filter(r=>r.prioridad==='Alta').length;const previousPeriod=filterByPeriod(allReportes.filter(r=>{const fecha=new Date(r.fecha),ahora=new Date(),cutoff1=new Date(ahora-(currentPeriod*24*60*60*1000)),cutoff2=new Date(ahora-(2*currentPeriod*24*60*60*1000));return fecha>=cutoff2&&fecha<cutoff1})),previousTotal=previousPeriod.length,trendTotal=previousTotal>0?Math.round(((total-previousTotal)/previousTotal)*100):0;document.getElementById('kpi-total').innerText=total;document.getElementById('trend-total').innerHTML=trendTotal>=0?`<i class="fas fa-arrow-up trend-up"></i> ${trendTotal}%`:`<i class="fas fa-arrow-down trend-down"></i> ${Math.abs(trendTotal)}%`;document.getElementById('kpi-eficiencia').innerText=eficiencia+"%";document.getElementById('subtitle-eficiencia').innerText=`${resueltos} de ${total} completados`;document.getElementById('kpi-revision').innerText=revision;document.getElementById('kpi-urgentes').innerText=urgentes;generateAISummary(filteredReportes);updateCharts(filteredReportes);updateTable(filteredReportes)}
+function processData(reportes){filteredReportes=filterByPeriod(reportes);const total=filteredReportes.length,resueltos=filteredReportes.filter(r=>r.estatus==='resuelto').length,eficiencia=total>0?Math.round((resueltos/total)*100):0,revision=filteredReportes.filter(r=>r.estatus==='en_progreso').length,urgentes=filteredReportes.filter(r=>['Alta','alta'].includes(r.prioridad)).length;const previousPeriod=filterByPeriod(allReportes.filter(r=>{const fecha=new Date(r.fecha_creacion),ahora=new Date(),cutoff1=new Date(ahora-(currentPeriod*24*60*60*1000)),cutoff2=new Date(ahora-(2*currentPeriod*24*60*60*1000));return fecha>=cutoff2&&fecha<cutoff1})),previousTotal=previousPeriod.length,trendTotal=previousTotal>0?Math.round(((total-previousTotal)/previousTotal)*100):0;document.getElementById('kpi-total').innerText=total;document.getElementById('trend-total').innerHTML=trendTotal>=0?`<i class="fas fa-arrow-up trend-up"></i> ${trendTotal}%`:`<i class="fas fa-arrow-down trend-down"></i> ${Math.abs(trendTotal)}%`;document.getElementById('kpi-eficiencia').innerText=eficiencia+"%";document.getElementById('subtitle-eficiencia').innerText=`${resueltos} de ${total} completados`;document.getElementById('kpi-revision').innerText=revision;document.getElementById('kpi-urgentes').innerText=urgentes;generateAISummary(filteredReportes);updateCharts(filteredReportes);updateTable(filteredReportes)}
 
-function generateAISummary(reportes){const total=reportes.length,completados=reportes.filter(r=>r.estatus==='Completado').length,urgentes=reportes.filter(r=>r.prioridad==='Alta').length,catCounts={};reportes.forEach(r=>{const cat=r.categoría||r.categoria||'Otros';catCounts[cat]=(catCounts[cat]||0)+1});const topCat=Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0];let summary=`En los últimos ${currentPeriod===9999?'todos los períodos':currentPeriod+' días'}, se registraron ${total} incidencias. `;if(topCat){summary+=`La categoría más reportada es "${topCat[0]}" con ${topCat[1]} casos (${Math.round((topCat[1]/total)*100)}%). `}summary+=`${completados} ya fueron resueltas (${Math.round((completados/total)*100)}% de eficiencia). `;if(urgentes>0){summary+=`⚠️ Hay ${urgentes} reportes de prioridad alta que requieren atención inmediata.`}else{summary+=`✅ No hay alertas críticas pendientes.`}document.getElementById('ai-summary-text').textContent=summary}
+function generateAISummary(reportes){const total=reportes.length,completados=reportes.filter(r=>r.estatus==='resuelto').length,urgentes=reportes.filter(r=>['Alta','alta'].includes(r.prioridad)).length,catCounts={};reportes.forEach(r=>{const cat=r.categoria||'Otros';catCounts[cat]=(catCounts[cat]||0)+1});const topCat=Object.entries(catCounts).sort((a,b)=>b[1]-a[1])[0];let summary=`En los últimos ${currentPeriod===9999?'todos los períodos':currentPeriod+' días'}, se registraron ${total} incidencias. `;if(topCat){summary+=`La categoría más reportada es "${topCat[0]}" con ${topCat[1]} casos (${Math.round((topCat[1]/total)*100)}%). `}summary+=`${completados} ya fueron resueltas (${Math.round((completados/total)*100)}% de eficiencia). `;if(urgentes>0){summary+=`⚠️ Hay ${urgentes} reportes de prioridad alta que requieren atención inmediata.`}else{summary+=`✅ No hay alertas críticas pendientes.`}document.getElementById('ai-summary-text').textContent=summary}
 
-function updateCharts(reportes){const catCounts={};reportes.forEach(r=>{const cat=r.categoría||r.categoria||'Sin categoría';catCounts[cat]=(catCounts[cat]||0)+1});updateCategoriesChart(catCounts);const statusCounts={'Nuevo':reportes.filter(r=>r.estatus==='Nuevo').length,'Pendiente':reportes.filter(r=>r.estatus==='Pendiente').length,'En Revisión':reportes.filter(r=>r.estatus==='En Revisión').length,'Completado':reportes.filter(r=>r.estatus==='Completado').length};updateStatusChart(statusCounts);updateTrendChart(reportes)}
+function updateCharts(reportes){const catCounts={};reportes.forEach(r=>{const cat=r.categoria||'Sin categoría';catCounts[cat]=(catCounts[cat]||0)+1});updateCategoriesChart(catCounts);const statusCounts={'Nuevo':reportes.filter(r=>r.estatus==='nuevo').length,'Pendiente':reportes.filter(r=>r.estatus==='pendiente').length,'En Revisión':reportes.filter(r=>r.estatus==='en_progreso').length,'Completado':reportes.filter(r=>r.estatus==='resuelto').length};updateStatusChart(statusCounts);updateTrendChart(reportes)}
 
 function updateCategoriesChart(counts){const ctx=document.getElementById('chartCategorias');if(chartCategorias)chartCategorias.destroy();chartCategorias=new Chart(ctx,{type:chartType,data:{labels:Object.keys(counts),datasets:[{label:'Reportes',data:Object.values(counts),backgroundColor:['#1e3a8a','#3b82f6','#60a5fa','#93c5fd'],borderRadius:chartType==='bar'?15:0,barThickness:chartType==='bar'?40:undefined}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:chartType!=='bar'},tooltip:{callbacks:{label:context=>`${context.label}: ${context.raw} reportes`}}},scales:chartType==='bar'?{y:{beginAtZero:true,grid:{display:false}},x:{grid:{display:false}}}:{}}})}
 
 function updateStatusChart(counts){const ctx=document.getElementById('chartEstatus');if(chartEstatus)chartEstatus.destroy();chartEstatus=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:['#ef4444','#f97316','#3b82f6','#22c55e'],borderWidth:8,borderColor:'#ffffff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom',labels:{font:{weight:'bold',size:10}}}}}});const total=Object.values(counts).reduce((a,b)=>a+b,0),breakdown=Object.entries(counts).map(([status,count])=>{const pct=total>0?Math.round((count/total)*100):0;return`<div class="flex justify-between"><span>${status}:</span><span class="font-black">${count} (${pct}%)</span></div>`}).join('');document.getElementById('stats-breakdown').innerHTML=breakdown}
 
-function updateTrendChart(reportes){const ctx=document.getElementById('chartTendencia');if(chartTendencia)chartTendencia.destroy();const dateCounts={};reportes.forEach(r=>{const fecha=new Date(r.fecha),dateKey=fecha.toISOString().split('T')[0];dateCounts[dateKey]=(dateCounts[dateKey]||0)+1});const sortedDates=Object.keys(dateCounts).sort();chartTendencia=new Chart(ctx,{type:'line',data:{labels:sortedDates.map(d=>new Date(d).toLocaleDateString('es-PR',{month:'short',day:'numeric'})),datasets:[{label:'Reportes por día',data:sortedDates.map(d=>dateCounts[d]),borderColor:'#1e3a8a',backgroundColor:'rgba(30,58,138,0.1)',fill:true,tension:0.4,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}})}
+function updateTrendChart(reportes){const ctx=document.getElementById('chartTendencia');if(chartTendencia)chartTendencia.destroy();const dateCounts={};reportes.forEach(r=>{if(!r.fecha_creacion)return;const fecha=new Date(r.fecha_creacion);if(isNaN(fecha.getTime()))return;const dateKey=fecha.toISOString().split('T')[0];dateCounts[dateKey]=(dateCounts[dateKey]||0)+1});const sortedDates=Object.keys(dateCounts).sort();chartTendencia=new Chart(ctx,{type:'line',data:{labels:sortedDates.map(d=>new Date(d).toLocaleDateString('es-PR',{month:'short',day:'numeric'})),datasets:[{label:'Reportes por día',data:sortedDates.map(d=>dateCounts[d]),borderColor:'#1e3a8a',backgroundColor:'rgba(30,58,138,0.1)',fill:true,tension:0.4,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}})}
 
-function updateTable(reportes){const ultimosDiez=reportes.slice(-10).reverse(),html=ultimosDiez.map(r=>{const diasEspera=calcularDias(r.fecha);return`<tr class="border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer" onclick="showReporteDetail('${r.id_reporte}')"><td class="py-4 text-blue-900 font-black italic uppercase text-xs">${r.id_reporte}</td><td class="py-4 text-xs">${r.categoría||r.categoria||'Sin categoría'}</td><td class="py-4 text-slate-400 font-medium italic text-xs">${r.ubicación||r.ubicacion||'Sin ubicación'}</td><td class="py-4 text-[10px] font-black uppercase text-slate-400">${r.estatus}</td><td class="py-4 text-right"><span class="px-3 py-1 rounded-full text-[9px] font-black ${r.prioridad==='Alta'?'bg-red-100 text-red-600':'bg-slate-100 text-slate-500'}">${r.prioridad||'Media'}</span></td><td class="py-4 text-right text-[10px] font-black text-orange-600">${diasEspera}</td></tr>`}).join('');document.getElementById('tabla-reciente').innerHTML=html}
+function updateTable(reportes){const ultimosDiez=reportes.slice(0,10),html=ultimosDiez.map(r=>{const diasEspera=calcularDias(r.fecha_creacion);return`<tr class="border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer" onclick="showReporteDetail('${r.id}')"><td class="py-4 text-blue-900 font-black italic uppercase text-xs">${r.id}</td><td class="py-4 text-xs">${r.categoria||'Sin categoría'}</td><td class="py-4 text-slate-400 font-medium italic text-xs">${r.ubicacion||'Sin ubicación'}</td><td class="py-4 text-[10px] font-black uppercase text-slate-400">${r.estatus}</td><td class="py-4 text-right"><span class="px-3 py-1 rounded-full text-[9px] font-black ${['Alta','alta'].includes(r.prioridad)?'bg-red-100 text-red-600':'bg-slate-100 text-slate-500'}">${r.prioridad||'Media'}</span></td><td class="py-4 text-right text-[10px] font-black text-orange-600">${diasEspera}</td></tr>`}).join('');document.getElementById('tabla-reciente').innerHTML=html}
 
-function calcularDias(fecha){const ahora=new Date(),fechaReporte=new Date(fecha),diff=Math.floor((ahora-fechaReporte)/(1000*60*60*24));return diff===0?'HOY':diff===1?'AYER':`${diff}D`}
+function calcularDias(fecha_creacion){const ahora=new Date(),fechaReporte=new Date(fecha_creacion),diff=Math.floor((ahora-fechaReporte)/(1000*60*60*24));return diff===0?'HOY':diff===1?'AYER':`${diff}D`}
 
 
 function showReporteDetail(id) {
     currentReporteId = id;
     addToRecentActivity(id);
-    console.log('Buscando reporte:', id);
-    console.log('Total reportes en allReportes:', allReportes.length);
-    const reporte = allReportes.find(r => r.id_reporte === id);
-    console.log('Reporte encontrado:', reporte);
-    if (!reporte) {
-        alert('Reporte no encontrado');
-        return;
-    }
+    const reporte = allReportes.find(r => r.id === id);
+    if (!reporte) { alert('Reporte no encontrado'); return; }
     document.getElementById('modal-title').textContent = id;
-    
-    // Get foto URL - handle different field names
-    const fotoUrl = reporte.foto_url || reporte.Foto_URL || reporte['Foto_URL'] || reporte.foto || '';
-    console.log('Foto URL encontrada:', fotoUrl);
-    
+    const fotoUrl = reporte.fotos && reporte.fotos.length > 0 ? reporte.fotos[0] : '';
     const content = `
 <div class="grid grid-cols-2 gap-4">
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoría || reporte.categoria || 'Sin categoría'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad || 'Media'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoria||'Sin categoría'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad||'Media'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm font-bold">${new Date(reporte.fecha).toLocaleDateString('es-PR')}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicación || reporte.ubicacion || 'Sin ubicación'}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripción || reporte.descripcion || 'Sin descripción'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm font-bold">${reporte.fecha_creacion ? new Date(reporte.fecha_creacion).toLocaleDateString('es-PR') : '—'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicacion||'Sin ubicación'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripcion||'Sin descripción'}</p></div>
     ${fotoUrl ? `<div class="col-span-2">
         <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica</p>
         <div class="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
-            <img src="${fotoUrl}" alt="Preview" class="w-48 h-48 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition" onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23e2e8f0%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2216%22>📷 Click para ver</text></svg>';">
-            <button onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
-                <i class="fas fa-search-plus"></i>
-                Ver Foto Completa
+            <img src="${fotoUrl}" alt="Preview" class="w-48 h-48 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition" onclick="openLightbox('${fotoUrl}', '${reporte.id}', '${reporte.fecha_creacion}')" onerror="this.style.display='none'">
+            <button onclick="openLightbox('${fotoUrl}', '${reporte.id}', '${reporte.fecha_creacion}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
+                <i class="fas fa-search-plus"></i> Ver Foto Completa
             </button>
         </div>
     </div>` : ''}
-    ${reporte.latitud && reporte.longitud ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">GPS</p><p class="text-sm font-mono">${reporte.latitud}, ${reporte.longitud}</p></div>` : ''}
+    ${reporte.lat && reporte.lng ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">GPS</p><p class="text-sm font-mono">${reporte.lat}, ${reporte.lng}</p></div>` : ''}
 </div>`;
     document.getElementById('modal-content').innerHTML = content;
     document.getElementById('detail-modal').classList.add('active');
@@ -555,23 +540,10 @@ function drillDown(kpi){let filter='';switch(kpi){case'urgentes':filter='priorid
 
 function toggleChartType(){chartType=chartType==='bar'?'pie':'bar';processData(allReportes)}
 
-function exportarReporte(){let csv=`Reporte Dashboard - Aguadilla
-
-Período: ${currentPeriod===9999?'Histórico':'Últimos '+currentPeriod+' días'}
-Generado: ${new Date().toLocaleString('es-PR')}
-
-Total Reportes,${filteredReportes.length}
-Completados,${filteredReportes.filter(r=>r.estatus==='Completado').length}
-En Revisión,${filteredReportes.filter(r=>r.estatus==='En Revisión').length}
-Urgentes,${filteredReportes.filter(r=>r.prioridad==='Alta').length}
-
-ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha
-`;filteredReportes.forEach(r=>csv+=`${r.id_reporte},"${r.categoría||r.categoria}","${r.ubicación||r.ubicacion}",${r.estatus},${r.prioridad},${r.fecha}
-`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`aguadilla-dashboard-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
+function exportarReporte(){let csv=`Reporte Dashboard - Aguadilla\n\nPeríodo: ${currentPeriod===9999?'Histórico':'Últimos '+currentPeriod+' días'}\nGenerado: ${new Date().toLocaleString('es-PR')}\n\nTotal Reportes,${filteredReportes.length}\nCompletados,${filteredReportes.filter(r=>r.estatus==='resuelto').length}\nEn Revisión,${filteredReportes.filter(r=>r.estatus==='en_progreso').length}\nUrgentes,${filteredReportes.filter(r=>['Alta','alta'].includes(r.prioridad)).length}\n\nID,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n`;filteredReportes.forEach(r=>csv+=`${r.id},"${r.categoria}","${r.ubicacion}",${r.estatus},${r.prioridad},${r.fecha_creacion}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`aguadilla-dashboard-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
 
 document.getElementById('detail-modal')?.addEventListener('click',e=>{if(e.target.id==='detail-modal')closeModal()});
 document.getElementById('command-palette')?.addEventListener('click',e=>{if(e.target.id==='command-palette')closeCommandPalette()});
-document.ad
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
