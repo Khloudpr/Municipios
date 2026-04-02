@@ -6,7 +6,6 @@
   <title>Acceso Empleados — Aguadilla Reporta</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <style>
     .gradient-bg { background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%); }
@@ -78,20 +77,25 @@
 
   </div>
 
+  <!-- Supabase cargado al final -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Inicializar Supabase con las keys del config.js
-    const { createClient } = supabase;
-    const sb = createClient(
-      window.MUNICIPIO_CONFIG.supabase_url,
-      window.MUNICIPIO_CONFIG.supabase_key
-    );
+    let sb;
 
-    // Aplicar nombre del sistema
-    document.getElementById('titulo-sistema').textContent = window.MUNICIPIO_CONFIG.sistema;
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar Supabase
+      sb = window.supabase.createClient(
+        window.MUNICIPIO_CONFIG.supabase_url,
+        window.MUNICIPIO_CONFIG.supabase_key
+      );
 
-    // Si ya hay sesión activa, ir directo al hub
-    sb.auth.getSession().then(({ data: { session } }) => {
-      if (session) window.location.href = 'hub.html';
+      // Aplicar nombre del sistema
+      document.getElementById('titulo-sistema').textContent = window.MUNICIPIO_CONFIG.sistema;
+
+      // Si ya hay sesión activa, ir directo al hub
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (session) sb.auth.signOut();;
+      });
     });
 
     function togglePassword() {
@@ -113,24 +117,20 @@
       const errorDiv = document.getElementById('error-msg');
       const errorTxt = document.getElementById('error-text');
 
-      // Validar campos
       if (!email || !password) {
         errorTxt.textContent = 'Por favor completa todos los campos.';
         errorDiv.classList.remove('hidden');
         return;
       }
 
-      // Loading state
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
       errorDiv.classList.add('hidden');
 
       try {
-        // 1. Login con Supabase Auth
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
-        // 2. Cargar perfil del empleado
         const { data: perfil, error: perfilError } = await sb
           .from('perfiles')
           .select('*')
@@ -140,10 +140,10 @@
         if (perfilError || !perfil) throw new Error('No se encontró el perfil del empleado.');
         if (!perfil.activo) throw new Error('Tu cuenta está desactivada. Contacta al administrador.');
 
-        // 3. Guardar info básica en sessionStorage para uso rápido
-        sessionStorage.setItem('perfil', JSON.stringify(perfil));
-
-        // 4. Redirigir al hub
+        localStorage.setItem('user_session', JSON.stringify({
+          ...perfil,
+          email: data.user.email
+        }));
         window.location.href = 'hub.html';
 
       } catch (err) {
@@ -156,7 +156,6 @@
       }
     }
 
-    // Enter para hacer login
     document.addEventListener('keydown', e => {
       if (e.key === 'Enter') iniciarSesion();
     });

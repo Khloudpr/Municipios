@@ -269,11 +269,15 @@
     </button>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
 let allReportes=[],filteredReportes=[],currentFilter='Todos',focusMode=false,userSession=null;
 
 window.onload = function() {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     verificarSesion();
     cargarReportes();
     setupFilters();
@@ -362,14 +366,14 @@ function updateCommandResults(query) {
         return;
     }
     const matches = allReportes.filter(r =>
-        r.id_reporte.toLowerCase().includes(query.toLowerCase()) ||
+        r.id.toLowerCase().includes(query.toLowerCase()) ||
         (r.categoría && r.categoría.toLowerCase().includes(query.toLowerCase())) ||
         (r.ubicación && r.ubicación.toLowerCase().includes(query.toLowerCase())) ||
-        (r.usuario && r.usuario.toLowerCase().includes(query.toLowerCase()))
+        (r.nombre && r.nombre.toLowerCase().includes(query.toLowerCase()))
     );
     const html = matches.slice(0, 8).map(r => `
-<div onclick="showReporteDetail('${r.id_reporte}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b">
-    <div class="font-black text-sm text-blue-900">${r.id_reporte}</div>
+<div onclick="showReporteDetail('${r.id}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b">
+    <div class="font-black text-sm text-blue-900">${r.id}</div>
     <div class="text-xs text-slate-600">${r.categoría || 'Sin categoría'} • ${r.ubicación || 'Sin ubicación'}</div>
 </div>`).join('') || '<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';
     document.getElementById('command-results').innerHTML = html;
@@ -421,26 +425,30 @@ function setupFilters() {
 }
 
 async function cargarReportes() {
-    const syncIcon = document.getElementById('sync-icon');
-    syncIcon.classList.add('fa-spin');
-    try {
-        const res = await fetch(SCRIPT_URL);
-        allReportes = await res.json();
-        console.log('Reportes cargados:', allReportes);
-        aplicarFiltro();
-        const ahora = new Date();
-        document.getElementById('sync-status').textContent = ahora.getHours() + ':' + ahora.getMinutes().toString().padStart(2, '0');
-    } catch (e) {
-        console.error('Error cargando reportes:', e);
-        alert('Error al cargar reportes');
-    } finally {
-        syncIcon.classList.remove('fa-spin');
-    }
+  const syncIcon = document.getElementById('sync-icon');
+  syncIcon.classList.add('fa-spin');
+  try {
+    
+    const { data, error } = await sb
+      .from('reportes')
+      .select('*')
+      .order('fecha_creacion', { ascending: false });
+
+    if (error) throw error;
+    allReportes = data || [];
+    aplicarFiltro();
+    const ahora = new Date();
+    document.getElementById('sync-status').textContent = ahora.getHours() + ':' + ahora.getMinutes().toString().padStart(2, '0');
+  } catch (e) {
+    console.error('Error cargando reportes:', e);
+  } finally {
+    syncIcon.classList.remove('fa-spin');
+  }
 }
 
 // SLA helper
 function getSLABadge(prioridad, fecha, estatus) {
-    if (estatus === 'Completado') return '';
+    if (estatus === 'resuelto') return '';
     if (!fecha) return '';
     const SLA = { 'Alta': 2, 'Media': 5, 'Baja': 10 };
     const dias = Math.floor((new Date() - new Date(fecha)) / (1000 * 60 * 60 * 24));
@@ -462,31 +470,31 @@ function aplicarFiltro() {
 
 function updateStats() {
     document.getElementById('stat-total').textContent = filteredReportes.length;
-    document.getElementById('stat-pendientes').textContent = allReportes.filter(r => r.estatus === 'Pendiente').length;
-    document.getElementById('stat-revision').textContent = allReportes.filter(r => r.estatus === 'En Revisión').length;
-    document.getElementById('stat-completados').textContent = allReportes.filter(r => r.estatus === 'Completado').length;
+    document.getElementById('stat-pendientes').textContent = allReportes.filter(r => r.estatus === 'pendiente').length;
+    document.getElementById('stat-revision').textContent = allReportes.filter(r => r.estatus === 'en_progreso').length;
+    document.getElementById('stat-completados').textContent = allReportes.filter(r => r.estatus === 'resuelto').length;
 }
 
 function renderTabla() {
     const html = filteredReportes.map(r => {
-        const idLimpio = String(r.id_reporte).replace('AG-','');
+        const idLimpio = String(r.id).replace('DM-','').replace('AG-','');
         return `
 <tr class="border-b hover:bg-slate-50 transition" id="row-${idLimpio}">
     <td class="p-4">
         <div class="flex flex-col gap-1">
-            <span class="text-blue-900 font-black italic uppercase text-xs cursor-pointer hover:underline" onclick="showReporteDetail('${r.id_reporte}')">${r.id_reporte}</span>
-            ${getSLABadge(r.prioridad, r.fecha, r.estatus)}
+            <span class="text-blue-900 font-black italic uppercase text-xs cursor-pointer hover:underline" onclick="showReporteDetail('${r.id}')">${r.id}</span>
+            ${getSLABadge(r.prioridad, r.fecha_creacion, r.estatus)}
         </div>
     </td>
-    <td class="p-4 text-xs font-bold">${r.usuario || 'Sin nombre'}</td>
+    <td class="p-4 text-xs font-bold">${r.nombre || 'Sin nombre'}</td>
     <td class="p-4 text-xs">${r.categoría || r.categoria || 'Sin categoría'}</td>
     <td class="p-4 text-xs text-slate-500">${r.ubicación || r.ubicacion || 'Sin ubicación'}</td>
     <td class="p-4 text-center">
         <select id="sel-${idLimpio}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getEstatusColor(r.estatus)}" onchange="markChanged('${idLimpio}')">
-            <option value="Nuevo" ${r.estatus === 'Nuevo' ? 'selected' : ''}>Nuevo</option>
-            <option value="Pendiente" ${r.estatus === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-            <option value="En Revisión" ${r.estatus === 'En Revisión' ? 'selected' : ''}>En Revisión</option>
-            <option value="Completado" ${r.estatus === 'Completado' ? 'selected' : ''}>Completado</option>
+            <option value="pendiente" ${r.estatus === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+            <option value="pendiente" ${r.estatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+            <option value="en_progreso" ${r.estatus === 'en_progreso' ? 'selected' : ''}>En Revisión</option>
+            <option value="resuelto" ${r.estatus === 'resuelto' ? 'selected' : ''}>Completado</option>
         </select>
     </td>
     <td class="p-4 text-center">
@@ -497,7 +505,7 @@ function renderTabla() {
         </select>
     </td>
     <td class="p-4 text-center">
-        <button id="btn-${idLimpio}" onclick="actualizar('${r.id_reporte}')" class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition">SAVE</button>
+        <button id="btn-${idLimpio}" onclick="actualizar('${r.id}')" class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition">SAVE</button>
     </td>
 </tr>`;
     }).join('');
@@ -531,8 +539,8 @@ function markChanged(id) {
 }
 
 async function actualizar(id) {
-    const btn = event.currentTarget;
-    const idLimpio = String(id).replace('AG-', '');
+    const btn = (event && event.currentTarget) ? event.currentTarget : document.getElementById(`btn-${String(id).replace('DM-','').replace('AG-','')}`);
+    const idLimpio = String(id).replace('DM-', '').replace('AG-', '');
     const estatusElement = document.getElementById(`sel-${idLimpio}`);
     const prioridadElement = document.getElementById(`prio-${idLimpio}`);
     
@@ -543,47 +551,39 @@ async function actualizar(id) {
     
     const estatus = estatusElement.value;
     const prioridad = prioridadElement.value;
-    const usuario = userSession ? userSession.email : 'Desconocido';
     
     btn.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
     btn.disabled = true;
     
     try {
-        const response = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'updateStatus',
-                id,
-                estatus,
-                prioridad,
-                usuario
-            })
-        });
         
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const { error } = await sb
+            .from('reportes')
+            .update({ estatus, prioridad })
+            .eq('id', id);
         
-        const data = await response.json();
+        if (error) throw error;
         
-        if (data.result === 'success') {
-            btn.innerHTML = '<i class="fas fa-check"></i>';
-            btn.classList.remove('bg-green-600', 'animate-pulse');
-            btn.classList.add('bg-green-700');
-            setTimeout(() => {
-                btn.innerHTML = 'SAVE';
-                btn.classList.remove('bg-green-700');
-                btn.classList.add('bg-blue-900');
-                btn.disabled = false;
-            }, 2000);
-            const row = document.getElementById(`row-${idLimpio}`);
-            if (row) {
-                row.classList.add('row-highlight');
-            }
-        } else {
-            throw new Error(data.message || 'Error');
-        }
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.remove('bg-blue-900');
+        btn.classList.add('bg-green-700');
+        setTimeout(() => {
+            btn.innerHTML = 'SAVE';
+            btn.classList.remove('bg-green-700');
+            btn.classList.add('bg-blue-900');
+            btn.disabled = false;
+        }, 2000);
+        
+        const row = document.getElementById(`row-${idLimpio}`);
+        if (row) row.classList.add('row-highlight');
+        
+        // Actualizar en memoria
+        const idx = allReportes.findIndex(r => r.id === id);
+        if (idx !== -1) { allReportes[idx].estatus = estatus; allReportes[idx].prioridad = prioridad; }
+        
     } catch (error) {
         console.error(error);
-        alert('Error al actualizar');
+        alert('Error al actualizar: ' + error.message);
         btn.innerHTML = 'SAVE';
         btn.disabled = false;
     }
@@ -591,7 +591,7 @@ async function actualizar(id) {
 
 function showReporteDetail(id) {
     addToRecentActivity(id);
-    const reporte = allReportes.find(r => r.id_reporte === id);
+    const reporte = allReportes.find(r => r.id === id);
     if (!reporte) {
         alert('Reporte no encontrado');
         return;
@@ -605,13 +605,13 @@ function showReporteDetail(id) {
 
     const content = `
 <div class="grid grid-cols-2 gap-4">
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Ciudadano</p><p class="text-sm font-bold">${reporte.usuario || 'Sin nombre'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Ciudadano</p><p class="text-sm font-bold">${reporte.nombre || 'Sin nombre'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Email</p><p class="text-sm">${reporte.email || 'Sin email'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoría || reporte.categoria || 'Sin categoría'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad || 'Media'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm">${new Date(reporte.fecha).toLocaleDateString('es-PR')}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">SLA</p><p class="text-sm">${getSLABadge(reporte.prioridad, reporte.fecha, reporte.estatus) || '<span class="text-green-600 font-semibold">✓ Completado</span>'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad ? reporte.prioridad.charAt(0).toUpperCase() + reporte.prioridad.slice(1) : 'Media'}</p></div>
+    ${reporte.estatus ? reporte.estatus.charAt(0).toUpperCase() + reporte.estatus.slice(1).replace('_', ' ') : '—'}
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm">${new Date(reporte.fecha_creacion).toLocaleDateString('es-PR')}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">SLA</p><p class="text-sm">${getSLABadge(reporte.prioridad, reporte.fecha_creacion, reporte.estatus) || '<span class="text-green-600 font-semibold">✓ Completado</span>'}</p></div>
     <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicación || reporte.ubicacion || 'Sin ubicación'}</p></div>
     <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripción || reporte.descripcion || 'Sin descripción'}</p></div>
     ${fotoUrls.length > 0 ? `<div class="col-span-2">
@@ -621,11 +621,11 @@ function showReporteDetail(id) {
                 ${fotoUrls.map((url, idx) => `
                 <img src="${url}" alt="Foto ${idx+1}" 
                     class="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-blue-500 transition"
-                    onclick="openLightbox('${url}', '${reporte.id_reporte}', '${reporte.fecha}')"
+                    onclick="openLightbox('${url}', '${reporte.id}', '${reporte.fecha_creacion}')"
                     onerror="this.onerror=null;this.style.display='none'">
                 `).join('')}
             </div>
-            <button onclick="openLightbox('${fotoUrls[0]}', '${reporte.id_reporte}', '${reporte.fecha}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
+            <button onclick="openLightbox('${fotoUrls[0]}', '${reporte.id}', '${reporte.fecha_creacion}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
                 <i class="fas fa-search-plus"></i>
                 Ver Foto${fotoUrls.length > 1 ? 's' : ''} Completa${fotoUrls.length > 1 ? 's' : ''}
             </button>
@@ -666,7 +666,7 @@ function closeModal() {
 
 function exportarReportes() {
     let csv = 'ID,Ciudadano,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n';
-    filteredReportes.forEach(r => csv += `${r.id_reporte},"${r.usuario || ''}","${r.categoría || r.categoria}","${r.ubicación || r.ubicacion}",${r.estatus},${r.prioridad || 'Media'},${r.fecha}\n`);
+    filteredReportes.forEach(r => csv += `${r.id},"${r.nombre || ''}","${r.categoría || r.categoria}","${r.ubicación || r.ubicacion}",${r.estatus},${r.prioridad || 'Media'},${reporte.fecha_creacion}\n`);
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -704,12 +704,18 @@ function avatarColorC(name) { let h=0; for(let c of (name||'')) h+=c.charCodeAt(
 async function cargarComentarios(idReporte) {
     const session = JSON.parse(localStorage.getItem('user_session') || '{}');
     try {
-        const res = await fetch(SCRIPT_URL + '?action=getComentarios&id=' + encodeURIComponent(idReporte) + '&email=' + encodeURIComponent(session.email || ''));
-        const data = await res.json();
-        if (data.result === 'success') {
-            renderComentarios(idReporte, data.comentarios || [], session);
-        }
-    } catch(e) { console.error('Error loading comments:', e); }
+        
+        const { data, error } = await sb
+            .from('comentarios')
+            .select('*')
+            .eq('id_reporte', idReporte)
+            .order('fecha', { ascending: true });
+        
+        if (error) throw error;
+        renderComentarios(idReporte, data || [], session);
+    } catch(e) { 
+        console.error('Error loading comments:', e); 
+    }
 }
 
 function renderComentarios(idReporte, comentarios, session) {
@@ -754,30 +760,25 @@ async function enviarComentario(idReporte) {
     const texto = input ? input.value.trim() : '';
     if (!texto) return;
     if (!session.email) { alert('Debes iniciar sesión'); return; }
-
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
     try {
-        const res = await fetch(SCRIPT_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: 'agregarComentario',
+        
+        const { error } = await sb
+            .from('comentarios')
+            .insert({
                 id_reporte: idReporte,
                 texto: texto,
                 autor: (session.nombre || '') + ' ' + (session.apellido || ''),
-                autor_email: session.email
-            })
-        });
-        const data = await res.json();
-        if (data.result === 'success') {
-            input.value = '';
-            cargarComentarios(idReporte);
-        } else {
-            alert('Error al guardar la nota');
-        }
+                autor_email: session.email,
+                fecha: new Date().toISOString()
+            });
+        
+        if (error) throw error;
+        input.value = '';
+        cargarComentarios(idReporte);
     } catch(e) {
-        alert('Error de conexión');
+        alert('Error al guardar la nota: ' + e.message);
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-paper-plane"></i>';

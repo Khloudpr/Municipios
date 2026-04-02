@@ -408,8 +408,11 @@
   <span id="toast-msg">Operación exitosa</span>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
 const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4'];
 let allEmpleados = [];
 let deleteTarget = null;
@@ -428,16 +431,14 @@ function avatarColor(name) {
 // ─── LOAD EMPLOYEES ───────────────────────────────────────
 async function cargarEmpleados() {
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'getEmpleados', email: session.email })
-    });
-    const data = await res.json();
-    if (data.result === 'success') {
-      allEmpleados = data.empleados || [];
-    } else {
-      allEmpleados = [];
-    }
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await sb
+      .from('vista_empleados')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    allEmpleados = data || [];
   } catch(e) {
     allEmpleados = [];
   }
@@ -464,12 +465,13 @@ function renderTabla(list) {
     const rolBadge = emp.rol === 'admin'
       ? '<span class="badge badge-admin"><i class="fas fa-crown text-xs"></i> Admin</span>'
       : '<span class="badge badge-empleado"><i class="fas fa-user-tie text-xs"></i> Empleado</span>';
-    const perms = emp.rol === 'admin'
-      ? '<span class="text-xs text-slate-400">Acceso completo</span>'
-      : (emp.permisos || '').split(',').filter(Boolean).map(p =>
-          `<span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 inline-flex items-center justify-center text-xs mr-1" title="${p}"><i class="fas fa-${permIcons[p.trim()]||'circle'}"></i></span>`
-        ).join('') || '<span class="text-xs text-slate-300">Sin permisos</span>';
-    const fecha = emp.fecha_creacion ? new Date(emp.fecha_creacion).toLocaleDateString('es-PR', {year:'2-digit',month:'short',day:'numeric'}) : '—';
+    const permsArray = Array.isArray(emp.permisos) ? emp.permisos : (emp.permisos || '').split(',').filter(Boolean);
+const perms = emp.rol === 'admin'
+  ? '<span class="text-xs text-slate-400">Acceso completo</span>'
+  : permsArray.filter(Boolean).map(p =>
+      `<span class="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 inline-flex items-center justify-center text-xs mr-1" title="${p}"><i class="fas fa-${permIcons[p.trim()]||'circle'}"></i></span>`
+    ).join('') || '<span class="text-xs text-slate-300">Sin permisos</span>';
+const fecha = emp.fecha_creacion ? new Date(emp.fecha_creacion).toLocaleDateString('es-PR', {year:'2-digit',month:'short',day:'numeric'}) : '—';
     return `<tr>
       <td><div class="flex items-center gap-3">
         <div class="avatar" style="background:${color}">${initials.toUpperCase()}</div>
@@ -538,33 +540,44 @@ async function guardarEmpleado(e) {
   const btn = document.getElementById('btn-guardar');
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
   btn.disabled = true;
+
   const rol = document.getElementById('form-rol').value;
   const permisos = rol === 'admin' ? 'dashboard,reportes,mapa,empleados' : Array.from(permsSeleccionados).join(',');
+
   const payload = {
-    action: 'crearEmpleado',
     nombre: document.getElementById('form-nombre').value.trim(),
     apellido: document.getElementById('form-apellido').value.trim(),
     email: document.getElementById('form-email').value.trim(),
     password: document.getElementById('form-password').value,
     telefono: document.getElementById('form-telefono').value.trim(),
     departamento: document.getElementById('form-departamento').value,
-    rol, permisos,
-    createdBy: session.email
+    rol,
+    permisos
   };
+
   try {
-    const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/crear-empleado`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
     const data = await res.json();
-    if (data.result === 'success') {
+    if (data.success) {
       cerrarModal('modal-crear');
       mostrarToast('Empleado creado exitosamente', false);
       cargarEmpleados();
-    } else if (data.result === 'exists') {
-      mostrarError('Este correo ya está registrado.');
     } else {
-      mostrarError(data.message || 'Error al crear el empleado.');
+      mostrarError(data.error || 'Error al crear el empleado.');
     }
-  } catch(err) { mostrarError('Error de conexión.'); }
-  finally { btn.innerHTML = '<i class="fas fa-plus"></i> Crear Empleado'; btn.disabled = false; }
+  } catch(err) {
+    mostrarError('Error de conexión.');
+  } finally {
+    btn.innerHTML = '<i class="fas fa-plus"></i> Crear Empleado';
+    btn.disabled = false;
+  }
 }
 
 // ─── EDIT ─────────────────────────────────────────────────
@@ -600,28 +613,30 @@ async function guardarEdicion() {
   const btn = document.getElementById('btn-guardar-edicion');
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
   btn.disabled = true;
+
+  const email = document.getElementById('edit-email').value;
   const rol = document.getElementById('edit-rol').value;
-  const permisos = rol === 'admin' ? 'dashboard,reportes,mapa,empleados' : Array.from(permsEditar).join(',');
+  const permisos = rol === 'admin' 
+    ? ['dashboard','reportes','mapa','empleados'] 
+    : Array.from(permsEditar);
+
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'editarEmpleado',
-        email: document.getElementById('edit-email').value,
-        rol, permisos,
-        adminEmail: session.email
-      })
-    });
-    const data = await res.json();
-    if (data.result === 'success') {
-      cerrarModal('modal-editar');
-      mostrarToast('Empleado actualizado', false);
-      cargarEmpleados();
-    } else {
-      mostrarToast(data.message || 'Error al actualizar', true);
-    }
-  } catch(e) { mostrarToast('Error de conexión', true); }
-  finally { btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios'; btn.disabled = false; }
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { error } = await sb
+      .from('perfiles')
+      .update({ rol, permisos })
+      .eq('id', (allEmpleados.find(e => e.email === email) || {}).id);
+
+    if (error) throw error;
+    cerrarModal('modal-editar');
+    mostrarToast('Empleado actualizado', false);
+    cargarEmpleados();
+  } catch(e) {
+    mostrarToast('Error al actualizar: ' + e.message, true);
+  } finally {
+    btn.innerHTML = '<i class="fas fa-save"></i> Guardar cambios';
+    btn.disabled = false;
+  }
 }
 
 // ─── DELETE ───────────────────────────────────────────────
@@ -636,21 +651,28 @@ async function confirmarEliminar() {
   const btn = document.getElementById('btn-confirmar-eliminar');
   btn.textContent = 'Eliminando...';
   btn.disabled = true;
+
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'eliminarEmpleado', email: deleteTarget, adminEmail: session.email })
-    });
-    const data = await res.json();
-    if (data.result === 'success') {
-      cerrarModal('modal-eliminar');
-      mostrarToast('Empleado eliminado', false);
-      cargarEmpleados();
-    } else {
-      mostrarToast(data.message || 'Error al eliminar', true);
-    }
-  } catch(e) { mostrarToast('Error de conexión', true); }
-  finally { btn.textContent = 'Eliminar'; btn.disabled = false; deleteTarget = null; }
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const emp = allEmpleados.find(e => e.email === deleteTarget);
+    if (!emp) throw new Error('Empleado no encontrado');
+
+    const { error } = await sb
+      .from('perfiles')
+      .update({ activo: false })
+      .eq('id', emp.id);
+
+    if (error) throw error;
+    cerrarModal('modal-eliminar');
+    mostrarToast('Empleado desactivado', false);
+    cargarEmpleados();
+  } catch(e) {
+    mostrarToast('Error: ' + e.message, true);
+  } finally {
+    btn.textContent = 'Eliminar';
+    btn.disabled = false;
+    deleteTarget = null;
+  }
 }
 
 // ─── HELPERS ──────────────────────────────────────────────
@@ -671,8 +693,8 @@ function mostrarToast(msg, isError = false) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
-
-cargarEmpleados();
-</script>
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    cargarEmpleados();
+  </script>
 </body>
 </html>
