@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="config.js"></script>
+<script>
+// Aplicar configuración del municipio dinámicamente
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    // CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    // Meta theme-color
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    // Textos
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    // Email placeholder
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    // Logo
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    // Título página
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  // Ejecutar inmediatamente y también cuando el DOM esté listo
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <style>
+    :root {
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
+      --color-secundario: #1e40af;
+      --color-acento: #3b82f6;
+    }
+  </style>
+  <style>
+        #map{height:600px;width:100%;border-radius:2.5rem;border:6px solid white;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);z-index:1}
+        .filter-btn.active{background-color:var(--color-primario);color:white;transform:scale(1.05)}
+        .sidebar-link{font-size:0.85rem;letter-spacing:0.05em;font-weight:800}
+        body{min-height:100vh;display:flex;flex-direction:column;background-color:#f8fafc}
+        ::-webkit-scrollbar{width:6px}
+        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
+        .leaflet-popup-content-wrapper{border-radius:1.5rem;padding:8px}
+        .zona-item{cursor:pointer;transition:all 0.3s}
+        .zona-item:hover{transform:translateX(5px)}
+        .btn-logout{transition:all 0.3s}
+        .btn-logout:hover{background-color:#dc2626;transform:translateX(5px)}
+        .marker-cluster-small{background-color:rgba(181,226,140,0.6)}
+        .marker-cluster-small div{background-color:rgba(110,204,57,0.6)}
+        .marker-cluster-medium{background-color:rgba(241,211,87,0.6)}
+        .marker-cluster-medium div{background-color:rgba(240,194,12,0.6)}
+        .marker-cluster-large{background-color:rgba(253,156,115,0.6)}
+        .marker-cluster-large div{background-color:rgba(241,128,23,0.6)}
+        .legend{background:white;padding:10px;border-radius:10px;box-shadow:0 1px 5px rgba(0,0,0,0.2)}
+        .legend-item{display:flex;align-items:center;margin:5px 0;font-size:11px;font-weight:bold}
+        .legend-color{width:20px;height:20px;border-radius:50%;margin-right:8px;border:2px solid white;box-shadow:0 0 3px rgba(0,0,0,0.3)}
+        .modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);align-items:center;justify-content:center}
+        .modal.active{display:flex}
+        .modal-content{background:white;border-radius:2rem;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;animation:slideUp 0.3s}
+        @keyframes slideUp{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
+        .command-palette{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.8);align-items:flex-start;justify-content:center;padding-top:15vh}
+        .command-palette.active{display:flex}
+        .quick-actions{position:fixed;bottom:30px;right:30px;z-index:50;display:flex;gap:10px}
+        .quick-btn{width:56px;height:56px;border-radius:50%;background:var(--color-primario);color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,58,138,0.4);cursor:pointer;transition:all 0.3s}
+        .quick-btn:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(30,58,138,0.6)}
+        body.focus-mode .sidebar,body.focus-mode .quick-actions,body.focus-mode header{opacity:0.3;pointer-events:none}
+        .breadcrumb{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
+        .breadcrumb a{color:#64748b;transition:color 0.2s}
+        .breadcrumb a:hover{color:var(--color-primario)}
+        .breadcrumb .current{color:var(--color-primario)}
+        
+        /* Lightbox Ultimate */
+        .lightbox{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;animation:fadeIn 0.3s}
+        .lightbox.active{display:flex}
+        .lightbox-image{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:1rem;box-shadow:0 25px 50px rgba(0,0,0,0.5)}
+        .lightbox-close{position:absolute;top:20px;right:20px;width:50px;height:50px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:all 0.3s;z-index:1000}
+        .lightbox-close:hover{transform:scale(1.1);background:#f1f5f9}
+        .lightbox-info{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);padding:1rem 2rem;border-radius:1rem;font-size:0.875rem;font-weight:700;color:#1e293b;display:flex;gap:2rem}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    </style>
+</head>
+<body class="font-sans">
+
+<!-- Shortcuts Help -->
+<div id="shortcuts-help" class="modal">
+    <div class="modal-content p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black">⌨️ Atajos de Teclado</h2>
+            <button onclick="closeShortcuts()" class="text-2xl text-slate-400 hover:text-slate-900">&times;</button>
+        </div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">G</kbd><span class="ml-4">Ir a Dashboard</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">R</kbd><span class="ml-4">Ir a Reportes</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">M</kbd><span class="ml-4">Ir a Mapa</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">/</kbd><span class="ml-4">Búsqueda rápida</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">F</kbd><span class="ml-4">Modo Focus</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">E</kbd><span class="ml-4">Exportar</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">H</kbd><span class="ml-4">Toggle Heatmap</span></div>
+            <div class="flex justify-between"><kbd class="bg-slate-100 px-3 py-2 rounded font-mono">?</kbd><span class="ml-4">Ver atajos</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Command Palette -->
+<div id="command-palette" class="command-palette">
+    <div class="w-full max-w-2xl px-4">
+        <input type="text" id="command-input" placeholder="🔍 Buscar por ID, categoría, zona..." class="w-full px-6 py-4 rounded-2xl text-lg font-bold border-4 border-blue-900 outline-none" autocomplete="off">
+        <div id="command-results" class="bg-white mt-2 rounded-2xl shadow-2xl max-h-96 overflow-y-auto"></div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detail-modal" class="modal">
+    <div class="modal-content">
+        <div class="p-8">
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex-1">
+                    <div class="breadcrumb mb-2">
+                        <a href="dashboard1.html">Dashboard</a>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
+                        <a href="#" onclick="closeModal();return false;">Mapa</a>
+                        <i class="fas fa-chevron-right text-[10px]"></i>
+                        <span class="current">Detalle</span>
+                    </div>
+                    <h2 id="modal-title" class="text-3xl font-black text-blue-900 italic"></h2>
+                </div>
+                <button onclick="closeModal()" class="text-3xl text-slate-400 hover:text-slate-900 ml-4">&times;</button>
+            </div>
+            <div id="modal-content" class="space-y-6"></div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="goToReportes()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-black uppercase text-sm hover:bg-blue-800 transition">
+                    <i class="fas fa-search-plus mr-2"></i>Ver en Reportes
+                </button>
+                <button onclick="closeModal()" class="px-6 bg-slate-100 text-slate-600 py-3 rounded-xl font-black uppercase text-sm hover:bg-slate-200 transition">Cerrar</button>
+            </div>
+        </div>
+<!-- Lightbox Ultimate -->
+<div id="photo-lightbox" class="lightbox" onclick="closeLightbox(event)">
+    <button class="lightbox-close" onclick="closeLightbox(event)">×</button>
+    <img id="lightbox-img" src="" alt="Evidencia" class="lightbox-image">
+    <div id="lightbox-info" class="lightbox-info"></div>
+</div>
+
+    </div>
+</div>
+
+<!-- Mobile Menu Button -->
+<button onclick="toggleMobileMenu()" class="md:hidden fixed top-4 left-4 z-50 bg-blue-900 text-white p-3 rounded-xl shadow-lg">
+    <i class="fas fa-bars text-xl"></i>
+</button>
+
+<div id="mobile-overlay" onclick="toggleMobileMenu()" class="md:hidden fixed inset-0 bg-black/50 z-40 opacity-0 pointer-events-none transition-opacity"></div>
+
+<div class="flex flex-1">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-blue-900 text-white p-8 flex flex-col fixed md:sticky top-0 h-screen shadow-2xl z-40 -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-white text-2xl"><i class="fas fa-times"></i></button>
+
+        <div class="flex items-center gap-3 mb-12">
+            <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg"><span data-municipio-iniciales>AR</span></div>
+            <span class="font-black text-xl uppercase italic tracking-tighter">Aguadilla</span>
+        </div>
+        
+        <nav class="space-y-6 flex-1">
+            <a href="dashboard1.html" class="sidebar-link flex items-center gap-4 opacity-70 hover:opacity-100 transition-all p-2">
+                <i class="fas fa-chart-pie w-6 text-lg"></i> DASHBOARD
+                <kbd class="ml-auto text-[9px] bg-blue-800 px-2 py-1 rounded opacity-50">G</kbd>
+            </a>
+            <a href="reportes1.html" class="sidebar-link flex items-center gap-4 opacity-70 hover:opacity-100 transition-all p-2">
+                <i class="fas fa-clipboard-list w-6 text-lg"></i> REPORTES
+                <kbd class="ml-auto text-[9px] bg-blue-800 px-2 py-1 rounded opacity-50">R</kbd>
+            </a>
+            <a href="mapa1.html" class="sidebar-link flex items-center gap-4 bg-blue-800 p-4 rounded-2xl shadow-xl">
+                <i class="fas fa-map-marked-alt w-6 text-lg"></i> MAPA
+                <kbd class="ml-auto text-[9px] bg-blue-700 px-2 py-1 rounded">M</kbd>
+            </a>
+        </nav>
+
+        <!-- Recent Activity -->
+        <div class="mb-6 p-4 bg-blue-800/30 rounded-xl">
+            <h4 class="text-[9px] font-black uppercase tracking-widest mb-3 text-blue-300">📌 Última Actividad</h4>
+            <div id="recent-activity" class="space-y-2 text-xs"></div>
+        </div>
+        
+        <div class="border-t border-blue-800 pt-6 space-y-4">
+            <div class="bg-blue-800/50 rounded-2xl p-4">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="bg-blue-700 w-10 h-10 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-black text-white truncate" id="user-name">Empleado</p>
+                        <p class="text-[9px] text-blue-300 truncate" id="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="11747c70787d517076647075787d7d703f727e7c">[email&#160;protected]</a></p>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="cerrarSesion()" class="btn-logout w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider">
+                <i class="fas fa-sign-out-alt"></i>Cerrar Sesión
+            </button>
+        </div>
+        
+        <div class="pt-4 text-[10px] font-black text-blue-400 uppercase tracking-widest italic text-center">GIS Ultimate v1.0</div>
+    </aside>
+
+    <div class="flex-1 flex flex-col p-4 md:p-10">
+        <!-- Header -->
+        <header class="mb-6 flex flex-col gap-4">
+            <div class="breadcrumb">
+                <a href="dashboard1.html">Dashboard</a>
+                <i class="fas fa-chevron-right text-[10px]"></i>
+                <span class="current">Mapa GIS</span>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-black text-slate-800 tracking-tight italic uppercase">Mapa Inteligente</h1>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></span>
+                        <p class="text-slate-500 font-bold text-sm">Sistema GIS en tiempo real</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="toggleHeatmap()" id="btn-heatmap" class="bg-white text-slate-700 px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition text-xs font-black uppercase" title="Heatmap (H)">
+                        <i class="fas fa-fire mr-2"></i><span class="hidden sm:inline">Heatmap</span>
+                    </button>
+                    <button onclick="toggleFocusMode()" class="bg-white text-slate-700 px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition text-xs font-black uppercase" title="Focus (F)">
+                        <i class="fas fa-eye mr-2"></i><span class="hidden sm:inline">Focus</span>
+                    </button>
+                    <button onclick="exportarCSV()" class="bg-white text-slate-700 px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition text-xs font-black uppercase" title="Exportar (E)">
+                        <i class="fas fa-download mr-2"></i><span class="hidden sm:inline">Exportar</span>
+                    </button>
+                    <button onclick="fetchDataFromServer()" class="bg-blue-900 text-white px-4 py-2 rounded-xl shadow-lg hover:bg-blue-800 transition text-xs font-black uppercase">
+                        <i class="fas fa-sync-alt mr-2" id="sync-icon"></i><span class="hidden sm:inline">Refrescar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="flex flex-col md:flex-row gap-2">
+                <input type="text" id="search-input" placeholder="🔍 Buscar por ID, categoría, zona..." class="flex-1 px-4 py-3 rounded-2xl border-2 border-slate-200 focus:border-blue-900 outline-none text-sm font-bold" onkeypress="if(event.key==='Enter')buscarReporte()">
+                <button onclick="buscarReporte()" class="bg-blue-900 text-white px-6 py-3 rounded-2xl shadow-lg hover:bg-blue-800 transition">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button data-status="Todos" class="filter-btn active px-4 py-2.5 rounded-2xl text-[10px] font-black uppercase transition tracking-widest bg-slate-100">Todos</button>
+                <button data-status="Nuevo" class="filter-btn px-4 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 uppercase transition tracking-widest bg-slate-50">Nuevos</button>
+                <button data-status="Pendiente" class="filter-btn px-4 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 uppercase transition tracking-widest bg-slate-50">Pendientes</button>
+                <button data-status="En Revisión" class="filter-btn px-4 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 uppercase transition tracking-widest whitespace-nowrap bg-slate-50">En Revisión</button>
+                <button data-status="Completado" class="filter-btn px-4 py-2.5 rounded-2xl text-[10px] font-black text-slate-400 uppercase transition tracking-widest bg-slate-50">Completados</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-3"><div id="map"></div></div>
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-2xl border border-slate-100 h-full">
+                    <h3 class="font-black text-slate-800 mb-6 italic text-sm uppercase tracking-widest border-b-4 border-blue-900 pb-3">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Zonas Activas
+                    </h3>
+                    <div id="lista-areas" class="space-y-3 max-h-[480px] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-auto pt-6 border-t-2 border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 px-4">
+            <div>
+                <h2 class="font-black text-xl md:text-2xl text-blue-900 uppercase italic"><span data-municipio-nombre>Municipio de Aguadilla</span></h2>
+                <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase">El Jardín del Atlántico</p>
+            </div>
+            <div class="flex flex-col items-end gap-1">
+                <div id="last-update" class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Esperando datos...</div>
+                <div id="stats-display" class="text-[9px] font-black text-blue-900 uppercase tracking-widest"></div>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <button class="quick-btn" onclick="openCommandPalette()" title="Buscar (/)">
+        <i class="fas fa-search"></i>
+    </button>
+    <button class="quick-btn" onclick="showShortcuts()" title="Atajos (?)">
+        <i class="fas fa-keyboard"></i>
+    </button>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
+let cacheReportes=[],map,markersCluster,heatLayer,heatmapActive=false,currentFilter='Todos',focusMode=false,currentReporteId=null;
+
+window.onload=()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
+
+
+        // Permission check
+        (function() {
+            const s = JSON.parse(localStorage.getItem('user_session') || '{}');
+            if (!s.email) { window.location.href = 'login.html'; return; }
+            if (s.rol === 'admin') return; // admin has full access
+            const perms = (s.permisos || '').split(',').map(p => p.trim());
+            if (!perms.includes('mapa')) {
+                window.location.href = 'hub.html';
+            }
+        })();
+        function verificarSesion(){const s=JSON.parse(localStorage.getItem('user_session')||'null');if(!s||!s.email||s.rol!=='empleado'&&s.rol!=='admin'){window.location.href='index.html';return}document.getElementById('user-name').textContent=`${s.nombre} ${s.apellido}`;document.getElementById('user-email').textContent=s.email}
+
+function cerrarSesion(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('user_session');window.location.href='index.html'}}
+
+function toggleMobileMenu(){const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('mobile-overlay');sidebar.classList.toggle('-translate-x-full');sidebar.classList.toggle('translate-x-0');overlay.classList.toggle('opacity-0');overlay.classList.toggle('pointer-events-none');overlay.classList.toggle('opacity-100');overlay.classList.toggle('pointer-events-auto')}
+
+function setupKeyboardShortcuts(){document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;switch(e.key.toLowerCase()){case'g':window.location.href='dashboard1.html';break;case'r':window.location.href='reportes1.html';break;case'm':window.location.href='mapa1.html';break;case'/':e.preventDefault();openCommandPalette();break;case'f':toggleFocusMode();break;case'h':toggleHeatmap();break;case'e':exportarCSV();break;case'?':showShortcuts();break;case'escape':closeModal();closeCommandPalette();break}})}
+
+function showShortcuts(){document.getElementById('shortcuts-help').classList.add('active')}
+function closeShortcuts(){document.getElementById('shortcuts-help').classList.remove('active')}
+
+function openCommandPalette(){document.getElementById('command-palette').classList.add('active');document.getElementById('command-input').focus();updateCommandResults('')}
+
+function closeCommandPalette(){document.getElementById('command-palette').classList.remove('active');document.getElementById('command-input').value=''}
+
+document.getElementById('command-input')?.addEventListener('input',e=>updateCommandResults(e.target.value));
+
+function updateCommandResults(query){if(!query){const html=`
+<div onclick="window.location.href='dashboard1.html'" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-chart-pie text-blue-900"></i><span class="font-bold text-sm">Ir a Dashboard</span></div>
+<div onclick="window.location.href='reportes1.html'" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-clipboard-list text-blue-900"></i><span class="font-bold text-sm">Ir a Reportes</span></div>
+<div onclick="toggleHeatmap();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-fire text-blue-900"></i><span class="font-bold text-sm">Toggle Heatmap</span></div>
+<div onclick="exportarCSV();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-download text-blue-900"></i><span class="font-bold text-sm">Exportar CSV</span></div>
+`;document.getElementById('command-results').innerHTML=html;return}const matches=cacheReportes.filter(r=>r.id_reporte.toLowerCase().includes(query.toLowerCase())||(r.categoría&&r.categoría.toLowerCase().includes(query.toLowerCase()))||(r.ubicación&&r.ubicación.toLowerCase().includes(query.toLowerCase())));const html=matches.slice(0,8).map(r=>`<div onclick="zoomToReporte('${r.id_reporte}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b"><div class="font-black text-sm text-blue-900">${r.id_reporte}</div><div class="text-xs text-slate-600">${r.categoría||'Sin categoría'} • ${r.ubicación||'Sin ubicación'}</div></div>`).join('')||'<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';document.getElementById('command-results').innerHTML=html}
+
+function toggleFocusMode(){focusMode=!focusMode;document.body.classList.toggle('focus-mode')}
+
+function updateRecentActivity(){const activity=(localStorage.getItem('recent_activity')||'').split(',').filter(Boolean).slice(0,3),html=activity.map(id=>`<div class="text-blue-300 hover:text-white cursor-pointer" onclick="zoomToReporte('${id}')"><i class="fas fa-file-alt mr-2 text-[10px]"></i>${id}</div>`).join('');document.getElementById('recent-activity').innerHTML=html||'<p class="text-blue-400 text-[10px]">Sin actividad</p>'}
+
+function addToRecentActivity(id){const activity=(localStorage.getItem('recent_activity')||'').split(',').filter(Boolean);activity.unshift(id);localStorage.setItem('recent_activity',[...new Set(activity)].slice(0,10).join(','));updateRecentActivity()}
+
+function initMap(){map=L.map('map',{zoomControl:false}).setView([window.MUNICIPIO_CONFIG.mapa_lat, window.MUNICIPIO_CONFIG.mapa_lng], window.MUNICIPIO_CONFIG.mapa_zoom);L.control.zoom({position:'bottomright'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);markersCluster=L.markerClusterGroup({maxClusterRadius:50,spiderfyOnMaxZoom:true,showCoverageOnHover:false,zoomToBoundsOnClick:true});map.addLayer(markersCluster);heatLayer=L.heatLayer([],{radius:25,blur:15,maxZoom:17});addLegend();fetchDataFromServer();document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',e=>{document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active','text-white');b.classList.add('text-slate-400')});e.currentTarget.classList.add('active','text-white');e.currentTarget.classList.remove('text-slate-400');currentFilter=e.currentTarget.dataset.status;aplicarFiltro(currentFilter)}))}
+
+function addLegend(){const legend=L.control({position:'bottomleft'});legend.onAdd=function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-size:10px;font-weight:800;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Leyenda</div><div class="legend-item"><div class="legend-color" style="background-color:#ef4444"></div>Nuevo</div><div class="legend-item"><div class="legend-color" style="background-color:#f97316"></div>Pendiente</div><div class="legend-item"><div class="legend-color" style="background-color:#3b82f6"></div>En Revisión</div><div class="legend-item"><div class="legend-color" style="background-color:#22c55e"></div>Completado</div>`;return div};legend.addTo(map)}
+
+async function fetchDataFromServer(){const syncIcon=document.getElementById('sync-icon');syncIcon.classList.add('fa-spin');try{const {data,error}=await sb.from('reportes').select('*').order('fecha_creacion',{ascending:false});if(error)throw error;cacheReportes=data||[];const ahora=new Date(),horaStr=ahora.getHours()+":"+ahora.getMinutes().toString().padStart(2,'0');document.getElementById('last-update').innerText=`Última carga: ${horaStr}`;document.getElementById('stats-display').innerText=`${cacheReportes.length} reportes`;aplicarFiltro(currentFilter)}catch(e){console.error(e);document.getElementById('lista-areas').innerHTML='<p class="text-red-500 font-bold p-4 text-center">Error de servidor</p>'}finally{syncIcon.classList.remove('fa-spin')}}
+
+function aplicarFiltro(status){markersCluster.clearLayers();const areasCount={},heatPoints=[];cacheReportes.forEach(rep=>{if(status==='Todos'||rep.estatus===status){const zona=rep.ubicacion||"Sin zona";areasCount[zona]=(areasCount[zona]||0)+1;const lat=parseFloat(rep.lat),lng=parseFloat(rep.lng);if(!isNaN(lat)&&!isNaN(lng)){heatPoints.push([lat,lng,1]);const colorMarker=rep.estatus==='nuevo'?'#ef4444':rep.estatus==='pendiente'?'#f97316':rep.estatus==='en_progreso'?'#3b82f6':'#22c55e';const marker=L.circleMarker([lat,lng],{radius:10,fillColor:colorMarker,color:"#fff",weight:3,fillOpacity:0.95});marker.on('click',()=>showReporteDetail(rep.id));markersCluster.addLayer(marker)}}});heatLayer.setLatLngs(heatPoints);renderizarZonas(areasCount)}
+
+function renderizarZonas(areasCount){const listaHTML=Object.entries(areasCount).sort((a,b)=>b[1]-a[1]).map(([name,count])=>`<div onclick="zoomToZona('${name}')" class="zona-item flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm hover:bg-white hover:shadow-xl"><span class="text-[11px] font-black text-slate-700 uppercase tracking-tighter w-2/3 leading-tight italic">${name}</span><span class="bg-blue-900 text-white px-3 py-1 rounded-xl text-[10px] font-black shadow-lg">${count}</span></div>`).join('');document.getElementById('lista-areas').innerHTML=listaHTML||'<p class="text-center py-10 text-slate-300 font-black uppercase text-[10px]">Sin reportes</p>'}
+
+function zoomToZona(zonaName){const reportesZona=cacheReportes.filter(r=>(r.ubicacion||"Sin zona")===zonaName);if(reportesZona.length>0){const lats=reportesZona.map(r=>parseFloat(r.lat)).filter(l=>!isNaN(l)),lngs=reportesZona.map(r=>parseFloat(r.lng)).filter(l=>!isNaN(l));if(lats.length>0&&lngs.length>0){const bounds=L.latLngBounds(lats.map((lat,i)=>[lat,lngs[i]]));map.fitBounds(bounds,{padding:[50,50],maxZoom:15})}}}
+
+function zoomToReporte(id){const reporte=cacheReportes.find(r=>r.id_reporte===id);if(!reporte){alert('Reporte no encontrado');return}const lat=parseFloat(reporte.latitud),lng=parseFloat(reporte.longitud);if(!isNaN(lat)&&!isNaN(lng)){map.setView([lat,lng],16);setTimeout(()=>showReporteDetail(id),500)}}
+
+function toggleHeatmap(){heatmapActive=!heatmapActive;const btn=document.getElementById('btn-heatmap');if(heatmapActive){map.addLayer(heatLayer);map.removeLayer(markersCluster);btn.classList.add('bg-red-500','text-white');btn.classList.remove('bg-white','text-slate-700')}else{map.removeLayer(heatLayer);map.addLayer(markersCluster);btn.classList.remove('bg-red-500','text-white');btn.classList.add('bg-white','text-slate-700')}}
+
+function buscarReporte(){const query=document.getElementById('search-input').value.toLowerCase().trim();if(!query){alert('Ingresa un término de búsqueda');return}const encontrados=cacheReportes.filter(r=>{const id=r.id_reporte.toString().toLowerCase(),cat=(r.categoría||r.categoria||'').toLowerCase(),ubi=(r.ubicación||r.ubicacion||'').toLowerCase();return id.includes(query)||cat.includes(query)||ubi.includes(query)});if(encontrados.length===0){alert(`No se encontraron reportes con: "${query}"`);return}zoomToReporte(encontrados[0].id_reporte)}
+
+function exportarCSV(){const filtrados=cacheReportes.filter(rep=>currentFilter==='Todos'||rep.estatus===currentFilter);if(filtrados.length===0){alert('No hay reportes para exportar');return}let csv='ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha,Latitud,Longitud\n';filtrados.forEach(r=>csv+=`${r.id_reporte},"${r.categoría||r.categoria||''}","${r.ubicación||r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha||''},${r.latitud||''},${r.longitud||''}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=``${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-mapa-`${currentFilter}-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
+
+
+function showReporteDetail(id) {
+    currentReporteId = id;
+    addToRecentActivity(id);
+    const reporte = cacheReportes.find(r => r.id_reporte === id);
+    if (!reporte) {
+        alert('Reporte no encontrado');
+        return;
+    }
+    document.getElementById('modal-title').textContent = id;
+    
+    // Get foto URL - handle different field names
+    const fotoUrl = reporte.foto_url || reporte.Foto_URL || reporte['Foto_URL'] || reporte.foto || '';
+    
+    const content = `
+<div class="grid grid-cols-2 gap-4">
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoría || reporte.categoria || 'Sin categoría'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad || 'Media'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm font-bold">${new Date(reporte.fecha).toLocaleDateString('es-PR')}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicación || reporte.ubicacion || 'Sin ubicación'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripción || reporte.descripcion || 'Sin descripción'}</p></div>
+    ${fotoUrl ? `<div class="col-span-2">
+        <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica</p>
+        <div class="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
+            <img src="${fotoUrl}" alt="Preview" class="w-48 h-48 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23e2e8f0%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2216%22>📷 Click para ver</text></svg>'; this.onclick=null; this.style.cursor='default';" onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')">
+            <button onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
+                <i class="fas fa-search-plus"></i>
+                Ver Foto Completa
+            </button>
+        </div>
+    </div>` : ''}
+    ${reporte.latitud && reporte.longitud ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">GPS</p><p class="text-sm font-mono">${reporte.latitud}, ${reporte.longitud}</p><button onclick="window.open('https://www.google.com/maps?q=${reporte.latitud},${reporte.longitud}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline"><i class="fas fa-search-plus mr-1"></i>Ver en Google Maps</button></div>` : ''}
+</div>`;
+    document.getElementById('modal-content').innerHTML = content;
+    document.getElementById('detail-modal').classList.add('active');
+}
+
+function openLightbox(url, id, fecha) {
+    document.getElementById('lightbox-img').src = url;
+    document.getElementById('lightbox-info').innerHTML = `
+        <span><i class="fas fa-hashtag mr-1"></i>${id}</span>
+        <span><i class="fas fa-calendar mr-1"></i>${new Date(fecha).toLocaleDateString('es-PR')}</span>
+    `;
+    document.getElementById('photo-lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox(event) {
+    if (event.target.id === 'photo-lightbox' || event.target.classList.contains('lightbox-close')) {
+        document.getElementById('photo-lightbox').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function closeModal(){document.getElementById('detail-modal').classList.remove('active')}
+
+function goToReportes(){window.location.href=currentReporteId?`reportes1.html?id=${currentReporteId}`:'reportes1.html'}
+
+document.getElementById('detail-modal')?.addEve
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeLightbox({target: {id: 'photo-lightbox'}});
+    }
+});
+</script>
+</body>
+</html>

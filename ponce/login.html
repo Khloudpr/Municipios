@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="config.js"></script>
+<script>
+// Aplicar configuración del municipio dinámicamente
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    // CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    // Meta theme-color
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    // Textos
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    // Email placeholder
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    // Logo
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    // Título página
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  // Ejecutar inmediatamente y también cuando el DOM esté listo
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+    <style>
+    :root {
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
+      --color-secundario: #1e40af;
+      --color-acento: #3b82f6;
+    }
+  </style>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 100%); }
+    .card { background: white; border-radius: 1.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+
+  <div class="card w-full max-w-md p-8">
+
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-blue-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-city text-white text-2xl"></i>
+      </div>
+      <h1 class="text-2xl font-black text-slate-900" id="titulo-sistema"><span data-municipio-sistema>Aguadilla Reporta</span></h1>
+      <p class="text-slate-500 text-sm mt-1">Portal de Empleados Municipales</p>
+    </div>
+
+    <!-- Error message -->
+    <div id="error-msg" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm mb-4 flex items-center gap-2">
+      <i class="fas fa-exclamation-circle"></i>
+      <span id="error-text">Correo o contraseña incorrectos.</span>
+    </div>
+
+    <!-- Form -->
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-1">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          placeholder="tu@municipio.pr.gov"
+          class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+      </div>
+
+      <div>
+        <label class="block text-sm font-bold text-slate-700 mb-1">Contraseña</label>
+        <div class="relative">
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+          >
+          <button onclick="togglePassword()" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
+            <i class="fas fa-eye" id="eye-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button
+        onclick="iniciarSesion()"
+        id="btn-login"
+        class="w-full bg-blue-900 hover:bg-blue-800 text-white font-black py-3 rounded-xl transition flex items-center justify-center gap-2"
+      >
+        <i class="fas fa-sign-in-alt"></i>
+        Iniciar Sesión
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-6">
+      <a href="index.html" class="text-slate-400 hover:text-slate-600 text-xs transition">
+        <i class="fas fa-arrow-left mr-1"></i> Volver al portal ciudadano
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Supabase cargado al final -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    let sb;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar Supabase
+      sb = window.supabase.createClient(
+        window.MUNICIPIO_CONFIG.supabase_url,
+        window.MUNICIPIO_CONFIG.supabase_key
+      );
+
+      // Aplicar nombre del sistema
+      document.getElementById('titulo-sistema').textContent = window.MUNICIPIO_CONFIG.sistema;
+
+      // Si ya hay sesión activa, ir directo al hub
+      sb.auth.getSession().then(({ data: { session } }) => {
+        if (session) sb.auth.signOut();;
+      });
+    });
+
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon  = document.getElementById('eye-icon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    }
+
+    async function iniciarSesion() {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('btn-login');
+      const errorDiv = document.getElementById('error-msg');
+      const errorTxt = document.getElementById('error-text');
+
+      if (!email || !password) {
+        errorTxt.textContent = 'Por favor completa todos los campos.';
+        errorDiv.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+      errorDiv.classList.add('hidden');
+
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+
+        const { data: perfil, error: perfilError } = await sb
+          .from('perfiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        if (perfilError || !perfil) throw new Error('No se encontró el perfil del empleado.');
+        if (!perfil.activo) throw new Error('Tu cuenta está desactivada. Contacta al administrador.');
+
+        localStorage.setItem('user_session', JSON.stringify({
+          ...perfil,
+          email: data.user.email
+        }));
+        window.location.href = 'hub.html';
+
+      } catch (err) {
+        errorTxt.textContent = err.message === 'Invalid login credentials'
+          ? 'Correo o contraseña incorrectos.'
+          : err.message;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') iniciarSesion();
+    });
+  </script>
+
+</body>
+</html>
