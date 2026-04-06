@@ -398,8 +398,16 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+        const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+        let sb;
+        // Inicializar Supabase
+        document.addEventListener('DOMContentLoaded', () => {
+            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        });
+
         let currentStep = 1;
         let photoData = null; // kept for backward compat
         let photosData = [null, null, null]; // up to 3 photos
@@ -580,90 +588,128 @@
             await enviarReporte(pendingFormData);
         }
 
+        async function subirFoto(base64Data, fileName) {
+            if (!base64Data) return null;
+            try {
+                // Convertir base64 a blob
+                const res = await fetch(base64Data);
+                const blob = await res.blob();
+                const ext = blob.type.split('/')[1] || 'jpg';
+                const path = `reportes/${Date.now()}_${fileName}.${ext}`;
+                const { data, error } = await sb.storage
+                    .from('fotos-reporte')
+                    .upload(path, blob, { contentType: blob.type, upsert: true });
+                if (error) throw error;
+                const { data: urlData } = sb.storage.from('fotos-reporte').getPublicUrl(path);
+                return urlData.publicUrl;
+            } catch (e) {
+                console.error('Error subiendo foto:', e);
+                return null;
+            }
+        }
+
         async function enviarReporte(formData) {
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
             try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                });
-                const data = await response.json();
-                if (data.result === 'success') {
-                    const trackingCode = data.id || 'AG-2026-' + String(Math.floor(Math.random() * 90000) + 10000);
-                    document.getElementById('tracking-code').textContent = trackingCode;
-                    const tLink = document.getElementById('tracking-link');
-                    if(tLink) tLink.href = 'consulta.html?codigo=' + encodeURIComponent(trackingCode);
-                    document.getElementById('success-modal').classList.remove('hidden');
-                    createConfetti();
-                } else {
-                    throw new Error(data.message || 'Error');
-                }
+                // Subir fotos a Supabase Storage
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Subiendo fotos...';
+                const [url1, url2, url3] = await Promise.all([
+                    subirFoto(formData.foto, 'foto1'),
+                    subirFoto(formData.foto2, 'foto2'),
+                    subirFoto(formData.foto3, 'foto3')
+                ]);
+
+                // Generar ID único
+                const trackingCode = 'AG-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000);
+
+                // Insertar en Supabase
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+                const { error } = await sb.from('reportes').insert([{
+                    id: trackingCode,
+                    nombre: formData.nombre + ' ' + formData.apellido,
+                    email: formData.email,
+                    telefono: formData.telefono || '',
+                    ubicacion: formData.ubicacion,
+                    lat: formData.lat || null,
+                    lng: formData.lng || null,
+                    categoria: formData.categoria,
+                    descripcion: formData.descripcion,
+                    fotos: [url1, url2, url3].filter(Boolean),
+                    estatus: 'nuevo',
+                    prioridad: 'Media',
+                    fecha_creacion: new Date().toISOString()
+                }]);
+
+                if (error) throw error;
+
+                document.getElementById('tracking-code').textContent = trackingCode;
+                const tLink = document.getElementById('tracking-link');
+                if (tLink) tLink.href = 'consulta.html?codigo=' + encodeURIComponent(trackingCode);
+                document.getElementById('success-modal').classList.remove('hidden');
+                createConfetti();
+
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al enviar. Intenta de nuevo.');
+                alert('Error al enviar: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar';
             }
         }
 
-        document.getElementById('report-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('report-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submit-btn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
 
-            const formData = {
-                nombre: document.getElementById('nombre').value,
-                apellido: document.getElementById('apellido').value,
-                email: document.getElementById('email').value,
-                telefono: document.getElementById('telefono').value,
-                ubicacion: document.getElementById('ubicacion').value,
-                lat: document.getElementById('latitud').value,
-                lng: document.getElementById('longitud').value,
-                categoria: document.getElementById('categoria').value,
-                descripcion: document.getElementById('descripcion').value,
-                foto: photosData[0] || '',
-                foto2: photosData[1] || '',
-                foto3: photosData[2] || '',
-                fecha: new Date().toISOString(),
-                estatus: 'Nuevo',
-                prioridad: 'Media'
-            };
+                const formData = {
+                    nombre: document.getElementById('nombre').value,
+                    apellido: document.getElementById('apellido').value,
+                    email: document.getElementById('email').value,
+                    telefono: document.getElementById('telefono').value,
+                    ubicacion: document.getElementById('ubicacion').value,
+                    lat: document.getElementById('latitud').value,
+                    lng: document.getElementById('longitud').value,
+                    categoria: document.getElementById('categoria').value,
+                    descripcion: document.getElementById('descripcion').value,
+                    foto: photosData[0] || '',
+                    foto2: photosData[1] || '',
+                    foto3: photosData[2] || '',
+                };
 
-            // Check duplicates first
-            try {
-                const dupRes = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'verificarDuplicado',
-                        categoria: formData.categoria,
-                        ubicacion: formData.ubicacion
-                    })
-                });
-                const dupData = await dupRes.json();
-                if (dupData.result === 'success' && dupData.duplicados && dupData.duplicados.length > 0) {
-                    pendingFormData = formData;
-                    const list = document.getElementById('duplicate-list');
-                    list.innerHTML = dupData.duplicados.map(d => `
-                        <div style="padding:8px 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
-                            <div>
-                                <div style="font-weight:700;font-size:13px;color:#0f172a">${d.id_reporte}</div>
-                                <div style="font-size:12px;color:#64748b">${d.categoria} — ${d.ubicacion || ''}</div>
-                            </div>
-                            <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700">${d.estatus}</span>
-                        </div>`).join('');
-                    document.getElementById('duplicate-modal').style.display = 'flex';
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Reporte';
-                    return;
+                // Verificar duplicados en Supabase
+                try {
+                    const hace48h = new Date(Date.now() - 48*60*60*1000).toISOString();
+                    const { data: duplicados } = await sb.from('reportes')
+                        .select('id, categoria, ubicacion, estatus')
+                        .eq('categoria', formData.categoria)
+                        .gte('fecha_creacion', hace48h);
+
+                    if (duplicados && duplicados.length > 0) {
+                        pendingFormData = formData;
+                        const list = document.getElementById('duplicate-list');
+                        list.innerHTML = duplicados.map(d => `
+                            <div style="padding:8px 0;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+                                <div>
+                                    <div style="font-weight:700;font-size:13px;color:#0f172a">${d.id}</div>
+                                    <div style="font-size:12px;color:#64748b">${d.categoria} — ${d.ubicacion || ''}</div>
+                                </div>
+                                <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700">${d.estatus}</span>
+                            </div>`).join('');
+                        document.getElementById('duplicate-modal').style.display = 'flex';
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Reporte';
+                        return;
+                    }
+                } catch(dupErr) {
+                    console.log('Duplicate check skipped:', dupErr);
                 }
-            } catch(dupErr) {
-                console.log('Duplicate check skipped:', dupErr);
-            }
 
-            await enviarReporte(formData);
+                await enviarReporte(formData);
+            });
         });
 
         function createConfetti() {
