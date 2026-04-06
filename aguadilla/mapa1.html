@@ -12,6 +12,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         #map{height:600px;width:100%;border-radius:2.5rem;border:6px solid white;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);z-index:1}
         .filter-btn.active{background-color:#1e3a8a;color:white;transform:scale(1.05)}
@@ -269,10 +270,12 @@
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
 let cacheReportes=[],map,markersCluster,heatLayer,heatmapActive=false,currentFilter='Todos',focusMode=false,currentReporteId=null;
 
-window.onload=()=>{verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
+window.onload=()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
 
 
         // Permission check
@@ -319,7 +322,7 @@ function initMap(){map=L.map('map',{zoomControl:false}).setView([18.4274,-67.154
 
 function addLegend(){const legend=L.control({position:'bottomleft'});legend.onAdd=function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-size:10px;font-weight:800;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Leyenda</div><div class="legend-item"><div class="legend-color" style="background-color:#ef4444"></div>Nuevo</div><div class="legend-item"><div class="legend-color" style="background-color:#f97316"></div>Pendiente</div><div class="legend-item"><div class="legend-color" style="background-color:#3b82f6"></div>En Revisión</div><div class="legend-item"><div class="legend-color" style="background-color:#22c55e"></div>Completado</div>`;return div};legend.addTo(map)}
 
-async function fetchDataFromServer(){const syncIcon=document.getElementById('sync-icon');syncIcon.classList.add('fa-spin');try{const res=await fetch(SCRIPT_URL);cacheReportes=await res.json();const ahora=new Date(),horaStr=ahora.getHours()+":"+ahora.getMinutes().toString().padStart(2,'0');document.getElementById('last-update').innerText=`Última carga: ${horaStr}`;document.getElementById('stats-display').innerText=`${cacheReportes.length} reportes`;aplicarFiltro(currentFilter)}catch(e){console.error(e);document.getElementById('lista-areas').innerHTML='<p class="text-red-500 font-bold p-4 text-center">Error de servidor</p>'}finally{syncIcon.classList.remove('fa-spin')}}
+async function fetchDataFromServer(){const syncIcon=document.getElementById('sync-icon');syncIcon.classList.add('fa-spin');try{const {data,error}=await sb.from('reportes').select('*').order('fecha_creacion',{ascending:false});if(error)throw error;cacheReportes=data||[];const ahora=new Date(),horaStr=ahora.getHours()+":"+ahora.getMinutes().toString().padStart(2,'0');document.getElementById('last-update').innerText=`Última carga: ${horaStr}`;document.getElementById('stats-display').innerText=`${cacheReportes.length} reportes`;aplicarFiltro(currentFilter)}catch(e){console.error(e);document.getElementById('lista-areas').innerHTML='<p class="text-red-500 font-bold p-4 text-center">Error de servidor</p>'}finally{syncIcon.classList.remove('fa-spin')}}
 
 function aplicarFiltro(status){markersCluster.clearLayers();const areasCount={},heatPoints=[];cacheReportes.forEach(rep=>{if(status==='Todos'||rep.estatus===status){const zona=rep.ubicación||rep.ubicacion||"Sin zona";areasCount[zona]=(areasCount[zona]||0)+1;const lat=parseFloat(rep.latitud),lng=parseFloat(rep.longitud);if(!isNaN(lat)&&!isNaN(lng)){heatPoints.push([lat,lng,1]);const colorMarker=rep.estatus==='Nuevo'?'#ef4444':rep.estatus==='Pendiente'?'#f97316':rep.estatus==='En Revisión'?'#3b82f6':'#22c55e';const marker=L.circleMarker([lat,lng],{radius:10,fillColor:colorMarker,color:"#fff",weight:3,fillOpacity:0.95});marker.on('click',()=>showReporteDetail(rep.id_reporte));markersCluster.addLayer(marker)}}});heatLayer.setLatLngs(heatPoints);renderizarZonas(areasCount)}
 
