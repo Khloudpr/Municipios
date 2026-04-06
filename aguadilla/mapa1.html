@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa GIS Inteligente - Aguadilla Ultimate</title>
+    <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -12,10 +12,59 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
+    <script src="config.js"></script>
+<script>
+// Aplicar configuración del municipio dinámicamente
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    // CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    // Meta theme-color
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    // Textos
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    // Email placeholder
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    // Logo
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    // Título página
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  // Ejecutar inmediatamente y también cuando el DOM esté listo
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+      <style>
+    :root {
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
+      --color-secundario: #1e40af;
+      --color-acento: #3b82f6;
+    }
+  </style>
+  <style>
         #map{height:600px;width:100%;border-radius:2.5rem;border:6px solid white;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);z-index:1}
-        .filter-btn.active{background-color:#1e3a8a;color:white;transform:scale(1.05)}
+        .filter-btn.active{background-color:var(--color-primario);color:white;transform:scale(1.05)}
         .sidebar-link{font-size:0.85rem;letter-spacing:0.05em;font-weight:800}
         body{min-height:100vh;display:flex;flex-direction:column;background-color:#f8fafc}
         ::-webkit-scrollbar{width:6px}
@@ -41,13 +90,13 @@
         .command-palette{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.8);align-items:flex-start;justify-content:center;padding-top:15vh}
         .command-palette.active{display:flex}
         .quick-actions{position:fixed;bottom:30px;right:30px;z-index:50;display:flex;gap:10px}
-        .quick-btn{width:56px;height:56px;border-radius:50%;background:#1e3a8a;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,58,138,0.4);cursor:pointer;transition:all 0.3s}
+        .quick-btn{width:56px;height:56px;border-radius:50%;background:var(--color-primario);color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,58,138,0.4);cursor:pointer;transition:all 0.3s}
         .quick-btn:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(30,58,138,0.6)}
         body.focus-mode .sidebar,body.focus-mode .quick-actions,body.focus-mode header{opacity:0.3;pointer-events:none}
         .breadcrumb{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
         .breadcrumb a{color:#64748b;transition:color 0.2s}
-        .breadcrumb a:hover{color:#1e3a8a}
-        .breadcrumb .current{color:#1e3a8a}
+        .breadcrumb a:hover{color:var(--color-primario)}
+        .breadcrumb .current{color:var(--color-primario)}
         
         /* Lightbox Ultimate */
         .lightbox{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;animation:fadeIn 0.3s}
@@ -137,7 +186,7 @@
         <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-white text-2xl"><i class="fas fa-times"></i></button>
 
         <div class="flex items-center gap-3 mb-12">
-            <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg">AR</div>
+            <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg"><span data-municipio-iniciales>AR</span></div>
             <span class="font-black text-xl uppercase italic tracking-tighter">Aguadilla</span>
         </div>
         
@@ -248,7 +297,7 @@
 
         <footer class="mt-auto pt-6 border-t-2 border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 px-4">
             <div>
-                <h2 class="font-black text-xl md:text-2xl text-blue-900 uppercase italic">Municipio de Aguadilla</h2>
+                <h2 class="font-black text-xl md:text-2xl text-blue-900 uppercase italic"><span data-municipio-nombre>Municipio de Aguadilla</span></h2>
                 <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase">El Jardín del Atlántico</p>
             </div>
             <div class="flex flex-col items-end gap-1">
@@ -318,7 +367,7 @@ function updateRecentActivity(){const activity=(localStorage.getItem('recent_act
 
 function addToRecentActivity(id){const activity=(localStorage.getItem('recent_activity')||'').split(',').filter(Boolean);activity.unshift(id);localStorage.setItem('recent_activity',[...new Set(activity)].slice(0,10).join(','));updateRecentActivity()}
 
-function initMap(){map=L.map('map',{zoomControl:false}).setView([18.4274,-67.1541],13);L.control.zoom({position:'bottomright'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);markersCluster=L.markerClusterGroup({maxClusterRadius:50,spiderfyOnMaxZoom:true,showCoverageOnHover:false,zoomToBoundsOnClick:true});map.addLayer(markersCluster);heatLayer=L.heatLayer([],{radius:25,blur:15,maxZoom:17});addLegend();fetchDataFromServer();document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',e=>{document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active','text-white');b.classList.add('text-slate-400')});e.currentTarget.classList.add('active','text-white');e.currentTarget.classList.remove('text-slate-400');currentFilter=e.currentTarget.dataset.status;aplicarFiltro(currentFilter)}))}
+function initMap(){map=L.map('map',{zoomControl:false}).setView([window.MUNICIPIO_CONFIG.mapa_lat, window.MUNICIPIO_CONFIG.mapa_lng], window.MUNICIPIO_CONFIG.mapa_zoom);L.control.zoom({position:'bottomright'}).addTo(map);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);markersCluster=L.markerClusterGroup({maxClusterRadius:50,spiderfyOnMaxZoom:true,showCoverageOnHover:false,zoomToBoundsOnClick:true});map.addLayer(markersCluster);heatLayer=L.heatLayer([],{radius:25,blur:15,maxZoom:17});addLegend();fetchDataFromServer();document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',e=>{document.querySelectorAll('.filter-btn').forEach(b=>{b.classList.remove('active','text-white');b.classList.add('text-slate-400')});e.currentTarget.classList.add('active','text-white');e.currentTarget.classList.remove('text-slate-400');currentFilter=e.currentTarget.dataset.status;aplicarFiltro(currentFilter)}))}
 
 function addLegend(){const legend=L.control({position:'bottomleft'});legend.onAdd=function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-size:10px;font-weight:800;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em">Leyenda</div><div class="legend-item"><div class="legend-color" style="background-color:#ef4444"></div>Nuevo</div><div class="legend-item"><div class="legend-color" style="background-color:#f97316"></div>Pendiente</div><div class="legend-item"><div class="legend-color" style="background-color:#3b82f6"></div>En Revisión</div><div class="legend-item"><div class="legend-color" style="background-color:#22c55e"></div>Completado</div>`;return div};legend.addTo(map)}
 
@@ -336,7 +385,7 @@ function toggleHeatmap(){heatmapActive=!heatmapActive;const btn=document.getElem
 
 function buscarReporte(){const query=document.getElementById('search-input').value.toLowerCase().trim();if(!query){alert('Ingresa un término de búsqueda');return}const encontrados=cacheReportes.filter(r=>{const id=r.id_reporte.toString().toLowerCase(),cat=(r.categoría||r.categoria||'').toLowerCase(),ubi=(r.ubicación||r.ubicacion||'').toLowerCase();return id.includes(query)||cat.includes(query)||ubi.includes(query)});if(encontrados.length===0){alert(`No se encontraron reportes con: "${query}"`);return}zoomToReporte(encontrados[0].id_reporte)}
 
-function exportarCSV(){const filtrados=cacheReportes.filter(rep=>currentFilter==='Todos'||rep.estatus===currentFilter);if(filtrados.length===0){alert('No hay reportes para exportar');return}let csv='ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha,Latitud,Longitud\n';filtrados.forEach(r=>csv+=`${r.id_reporte},"${r.categoría||r.categoria||''}","${r.ubicación||r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha||''},${r.latitud||''},${r.longitud||''}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`aguadilla-mapa-${currentFilter}-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
+function exportarCSV(){const filtrados=cacheReportes.filter(rep=>currentFilter==='Todos'||rep.estatus===currentFilter);if(filtrados.length===0){alert('No hay reportes para exportar');return}let csv='ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha,Latitud,Longitud\n';filtrados.forEach(r=>csv+=`${r.id_reporte},"${r.categoría||r.categoria||''}","${r.ubicación||r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha||''},${r.latitud||''},${r.longitud||''}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=``${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-mapa-`${currentFilter}-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
 
 
 function showReporteDetail(id) {

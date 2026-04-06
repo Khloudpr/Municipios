@@ -3,12 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acceso Empleados — Aguadilla Reporta</title>
+  <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="config.js"></script>
+<script>
+// Aplicar configuración del municipio dinámicamente
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    // CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    // Meta theme-color
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    // Textos
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    // Email placeholder
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    // Logo
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    // Título página
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  // Ejecutar inmediatamente y también cuando el DOM esté listo
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+    <style>
+    :root {
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
+      --color-secundario: #1e40af;
+      --color-acento: #3b82f6;
+    }
+  </style>
   <style>
-    .gradient-bg { background: linear-gradient(135deg, #1E3A5F 0%, #2563EB 100%); }
+    .gradient-bg { background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 100%); }
     .card { background: white; border-radius: 1.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
   </style>
 </head>
@@ -21,7 +69,7 @@
       <div class="w-16 h-16 bg-blue-900 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <i class="fas fa-city text-white text-2xl"></i>
       </div>
-      <h1 class="text-2xl font-black text-slate-900" id="titulo-sistema">Aguadilla Reporta</h1>
+      <h1 class="text-2xl font-black text-slate-900" id="titulo-sistema"><span data-municipio-sistema>Aguadilla Reporta</span></h1>
       <p class="text-slate-500 text-sm mt-1">Portal de Empleados Municipales</p>
     </div>
 

@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aguadilla Intelligence Hub - Ultimate Edition</title>
+    <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
+      <style>
+    :root {
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
+      --color-secundario: #1e40af;
+      --color-acento: #3b82f6;
+    }
+  </style>
+  <style>
         .glass-card{background:rgba(255,255,255,0.9);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);transition:all 0.3s}
         .glass-card:hover{transform:translateY(-5px);box-shadow:0 20px 25px -5px rgba(0,0,0,0.1)}
         .sidebar-link{font-size:0.85rem;letter-spacing:0.05em;font-weight:800}
@@ -18,7 +26,7 @@
         .trend-up{color:#22c55e}
         .trend-down{color:#ef4444}
         .filter-btn{transition:all 0.2s}
-        .filter-btn.active{background-color:#1e3a8a;color:white;transform:scale(1.05)}
+        .filter-btn.active{background-color:var(--color-primario);color:white;transform:scale(1.05)}
         .modal{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.7);align-items:center;justify-content:center}
         .modal.active{display:flex}
         .modal-content{background:white;border-radius:2rem;max-width:800px;width:90%;max-height:90vh;overflow-y:auto;animation:slideUp 0.3s}
@@ -29,13 +37,13 @@
         .notification-panel{display:none;position:absolute;top:100%;right:0;margin-top:10px;background:white;border-radius:1rem;box-shadow:0 10px 25px rgba(0,0,0,0.2);width:350px;max-height:400px;overflow-y:auto;z-index:50}
         .notification-panel.active{display:block}
         .quick-actions{position:fixed;bottom:30px;right:30px;z-index:50;display:flex;gap:10px}
-        .quick-btn{width:56px;height:56px;border-radius:50%;background:#1e3a8a;color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,58,138,0.4);cursor:pointer;transition:all 0.3s}
+        .quick-btn{width:56px;height:56px;border-radius:50%;background:var(--color-primario);color:white;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(30,58,138,0.4);cursor:pointer;transition:all 0.3s}
         .quick-btn:hover{transform:scale(1.1);box-shadow:0 6px 20px rgba(30,58,138,0.6)}
         body.focus-mode .sidebar,body.focus-mode .quick-actions,body.focus-mode header{opacity:0.3;pointer-events:none}
         .breadcrumb{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
         .breadcrumb a{color:#64748b;transition:color 0.2s}
-        .breadcrumb a:hover{color:#1e3a8a}
-        .breadcrumb .current{color:#1e3a8a}
+        .breadcrumb a:hover{color:var(--color-primario)}
+        .breadcrumb .current{color:var(--color-primario)}
         
         /* Lightbox Ultimate */
         .lightbox{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;animation:fadeIn 0.3s}
@@ -124,7 +132,7 @@
         <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-white text-2xl"><i class="fas fa-times"></i></button>
 
         <div class="flex items-center gap-3 mb-12">
-            <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg">AR</div>
+            <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg"><span data-municipio-iniciales>AR</span></div>
             <span class="font-black text-xl uppercase italic tracking-tighter">Aguadilla</span>
         </div>
         
@@ -347,7 +355,48 @@
     </button>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
+// Aplicar configuración del municipio dinámicamente
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    // CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    // Meta theme-color
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    // Textos
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    // Email placeholder
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    // Logo
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    // Título página
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  // Ejecutar inmediatamente y también cuando el DOM esté listo
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
@@ -474,11 +523,11 @@ function generateAISummary(reportes){const total=reportes.length,completados=rep
 
 function updateCharts(reportes){const catCounts={};reportes.forEach(r=>{const cat=r.categoria||'Sin categoría';catCounts[cat]=(catCounts[cat]||0)+1});updateCategoriesChart(catCounts);const statusCounts={'Nuevo':reportes.filter(r=>r.estatus==='nuevo').length,'Pendiente':reportes.filter(r=>r.estatus==='pendiente').length,'En Revisión':reportes.filter(r=>r.estatus==='en_progreso').length,'Completado':reportes.filter(r=>r.estatus==='resuelto').length};updateStatusChart(statusCounts);updateTrendChart(reportes)}
 
-function updateCategoriesChart(counts){const ctx=document.getElementById('chartCategorias');if(chartCategorias)chartCategorias.destroy();chartCategorias=new Chart(ctx,{type:chartType,data:{labels:Object.keys(counts),datasets:[{label:'Reportes',data:Object.values(counts),backgroundColor:['#1e3a8a','#3b82f6','#60a5fa','#93c5fd'],borderRadius:chartType==='bar'?15:0,barThickness:chartType==='bar'?40:undefined}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:chartType!=='bar'},tooltip:{callbacks:{label:context=>`${context.label}: ${context.raw} reportes`}}},scales:chartType==='bar'?{y:{beginAtZero:true,grid:{display:false}},x:{grid:{display:false}}}:{}}})}
+function updateCategoriesChart(counts){const ctx=document.getElementById('chartCategorias');if(chartCategorias)chartCategorias.destroy();chartCategorias=new Chart(ctx,{type:chartType,data:{labels:Object.keys(counts),datasets:[{label:'Reportes',data:Object.values(counts),backgroundColor:['var(--color-primario)','#3b82f6','#60a5fa','#93c5fd'],borderRadius:chartType==='bar'?15:0,barThickness:chartType==='bar'?40:undefined}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:chartType!=='bar'},tooltip:{callbacks:{label:context=>`${context.label}: ${context.raw} reportes`}}},scales:chartType==='bar'?{y:{beginAtZero:true,grid:{display:false}},x:{grid:{display:false}}}:{}}})}
 
 function updateStatusChart(counts){const ctx=document.getElementById('chartEstatus');if(chartEstatus)chartEstatus.destroy();chartEstatus=new Chart(ctx,{type:'doughnut',data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:['#ef4444','#f97316','#3b82f6','#22c55e'],borderWidth:8,borderColor:'#ffffff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{position:'bottom',labels:{font:{weight:'bold',size:10}}}}}});const total=Object.values(counts).reduce((a,b)=>a+b,0),breakdown=Object.entries(counts).map(([status,count])=>{const pct=total>0?Math.round((count/total)*100):0;return`<div class="flex justify-between"><span>${status}:</span><span class="font-black">${count} (${pct}%)</span></div>`}).join('');document.getElementById('stats-breakdown').innerHTML=breakdown}
 
-function updateTrendChart(reportes){const ctx=document.getElementById('chartTendencia');if(chartTendencia)chartTendencia.destroy();const dateCounts={};reportes.forEach(r=>{if(!r.fecha_creacion)return;const fecha=new Date(r.fecha_creacion);if(isNaN(fecha.getTime()))return;const dateKey=fecha.toISOString().split('T')[0];dateCounts[dateKey]=(dateCounts[dateKey]||0)+1});const sortedDates=Object.keys(dateCounts).sort();chartTendencia=new Chart(ctx,{type:'line',data:{labels:sortedDates.map(d=>new Date(d).toLocaleDateString('es-PR',{month:'short',day:'numeric'})),datasets:[{label:'Reportes por día',data:sortedDates.map(d=>dateCounts[d]),borderColor:'#1e3a8a',backgroundColor:'rgba(30,58,138,0.1)',fill:true,tension:0.4,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}})}
+function updateTrendChart(reportes){const ctx=document.getElementById('chartTendencia');if(chartTendencia)chartTendencia.destroy();const dateCounts={};reportes.forEach(r=>{if(!r.fecha_creacion)return;const fecha=new Date(r.fecha_creacion);if(isNaN(fecha.getTime()))return;const dateKey=fecha.toISOString().split('T')[0];dateCounts[dateKey]=(dateCounts[dateKey]||0)+1});const sortedDates=Object.keys(dateCounts).sort();chartTendencia=new Chart(ctx,{type:'line',data:{labels:sortedDates.map(d=>new Date(d).toLocaleDateString('es-PR',{month:'short',day:'numeric'})),datasets:[{label:'Reportes por día',data:sortedDates.map(d=>dateCounts[d]),borderColor:'var(--color-primario)',backgroundColor:'rgba(30,58,138,0.1)',fill:true,tension:0.4,borderWidth:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#f1f5f9'}},x:{grid:{display:false}}}}})}
 
 function updateTable(reportes){const ultimosDiez=reportes.slice(0,10),html=ultimosDiez.map(r=>{const diasEspera=calcularDias(r.fecha_creacion);return`<tr class="border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer" onclick="showReporteDetail('${r.id}')"><td class="py-4 text-blue-900 font-black italic uppercase text-xs">${r.id}</td><td class="py-4 text-xs">${r.categoria||'Sin categoría'}</td><td class="py-4 text-slate-400 font-medium italic text-xs">${r.ubicacion||'Sin ubicación'}</td><td class="py-4 text-[10px] font-black uppercase text-slate-400">${r.estatus}</td><td class="py-4 text-right"><span class="px-3 py-1 rounded-full text-[9px] font-black ${['Alta','alta'].includes(r.prioridad)?'bg-red-100 text-red-600':'bg-slate-100 text-slate-500'}">${r.prioridad||'Media'}</span></td><td class="py-4 text-right text-[10px] font-black text-orange-600">${diasEspera}</td></tr>`}).join('');document.getElementById('tabla-reciente').innerHTML=html}
 
@@ -540,7 +589,7 @@ function drillDown(kpi){let filter='';switch(kpi){case'urgentes':filter='priorid
 
 function toggleChartType(){chartType=chartType==='bar'?'pie':'bar';processData(allReportes)}
 
-function exportarReporte(){let csv=`Reporte Dashboard - Aguadilla\n\nPeríodo: ${currentPeriod===9999?'Histórico':'Últimos '+currentPeriod+' días'}\nGenerado: ${new Date().toLocaleString('es-PR')}\n\nTotal Reportes,${filteredReportes.length}\nCompletados,${filteredReportes.filter(r=>r.estatus==='resuelto').length}\nEn Revisión,${filteredReportes.filter(r=>r.estatus==='en_progreso').length}\nUrgentes,${filteredReportes.filter(r=>['Alta','alta'].includes(r.prioridad)).length}\n\nID,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n`;filteredReportes.forEach(r=>csv+=`${r.id},"${r.categoria}","${r.ubicacion}",${r.estatus},${r.prioridad},${r.fecha_creacion}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`aguadilla-dashboard-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
+function exportarReporte(){let csv=``Reporte Dashboard - ${window.MUNICIPIO_CONFIG.nombre}\n`\nPeríodo: ${currentPeriod===9999?'Histórico':'Últimos '+currentPeriod+' días'}\nGenerado: ${new Date().toLocaleString('es-PR')}\n\nTotal Reportes,${filteredReportes.length}\nCompletados,${filteredReportes.filter(r=>r.estatus==='resuelto').length}\nEn Revisión,${filteredReportes.filter(r=>r.estatus==='en_progreso').length}\nUrgentes,${filteredReportes.filter(r=>['Alta','alta'].includes(r.prioridad)).length}\n\nID,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n`;filteredReportes.forEach(r=>csv+=`${r.id},"${r.categoria}","${r.ubicacion}",${r.estatus},${r.prioridad},${r.fecha_creacion}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=``${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-dashboard-`${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
 
 document.getElementById('detail-modal')?.addEventListener('click',e=>{if(e.target.id==='detail-modal')closeModal()});
 document.getElementById('command-palette')?.addEventListener('click',e=>{if(e.target.id==='command-palette')closeCommandPalette()});
