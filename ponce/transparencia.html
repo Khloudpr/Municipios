@@ -213,8 +213,6 @@
 </div>
 
 <script>
-const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
 let sb;
 let chartEstatus = null, chartTendencia = null;
 
@@ -228,7 +226,7 @@ const CAT_COLORS = ['var(--color-acento)','#8b5cf6','#10b981','#f59e0b','#ef4444
 
 async function cargarDatos() {
   try {
-    if (!sb) sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (!sb) sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
     const { data: reportes, error } = await sb.from('reportes').select('*');
     if (error || !Array.isArray(reportes)) return;
 

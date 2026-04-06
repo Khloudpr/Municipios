@@ -451,8 +451,6 @@
 </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
 let sb;
 const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4'];
 let allEmpleados = [];
@@ -472,7 +470,7 @@ function avatarColor(name) {
 // ─── LOAD EMPLOYEES ───────────────────────────────────────
 async function cargarEmpleados() {
   try {
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
     const { data, error } = await sb
       .from('vista_empleados')
       .select('*')
@@ -597,11 +595,11 @@ async function guardarEmpleado(e) {
   };
 
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/crear-empleado`, {
+    const res = await fetch(`${window.MUNICIPIO_CONFIG.supabase_url}/functions/v1/crear-empleado`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'Authorization': `Bearer ${window.MUNICIPIO_CONFIG.supabase_key}`
       },
       body: JSON.stringify(payload)
     });
@@ -662,7 +660,7 @@ async function guardarEdicion() {
     : Array.from(permsEditar);
 
   try {
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
     const { error } = await sb
       .from('perfiles')
       .update({ rol, permisos })
@@ -694,7 +692,7 @@ async function confirmarEliminar() {
   btn.disabled = true;
 
   try {
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
     const emp = allEmpleados.find(e => e.email === deleteTarget);
     if (!emp) throw new Error('Empleado no encontrado');
 
@@ -734,7 +732,7 @@ function mostrarToast(msg, isError = false) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
 }
-    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
     cargarEmpleados();
   </script>
 </body>

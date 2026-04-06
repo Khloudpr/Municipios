@@ -450,12 +450,10 @@
 </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
         let sb;
         // Inicializar Supabase
         document.addEventListener('DOMContentLoaded', () => {
-            sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            sb = window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url, window.MUNICIPIO_CONFIG.supabase_key);
         });
 
         let currentStep = 1;

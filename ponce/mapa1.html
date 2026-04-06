@@ -319,12 +319,10 @@
 </div>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
 let sb;
 let cacheReportes=[],map,markersCluster,heatLayer,heatmapActive=false,currentFilter='Todos',focusMode=false,currentReporteId=null;
 
-window.onload=()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
+window.onload=()=>{sb=window.supabase.createClient(window.MUNICIPIO_CONFIG.supabase_url,window.MUNICIPIO_CONFIG.supabase_key);verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
 
 
         // Permission check

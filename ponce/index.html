@@ -616,8 +616,8 @@
         async function loadRealStats() {
             try {
                 const sb = window.supabase.createClient(
-                    "https://fqwstwkbusjrzcznnwiv.supabase.co",
-                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo"
+                    window.MUNICIPIO_CONFIG.supabase_url,
+                    window.MUNICIPIO_CONFIG.supabase_key
                 );
                 const { data: reportes, error } = await sb.from('reportes').select('estatus, fecha_creacion');
                 if (error) throw error;
