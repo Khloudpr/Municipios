@@ -588,6 +588,21 @@
             await enviarReporte(pendingFormData);
         }
 
+        function getDepartamento(categoria) {
+            const mapa = {
+                'Baches / Hoyos': 'Obras Publicas',
+                'Alumbrado Público': 'Obras Publicas',
+                'Basura / Escombros': 'Ambiente',
+                'Tuberías / Agua': 'Acueductos',
+                'Señalización': 'Obras Publicas',
+                'Árboles': 'Ambiente',
+                'Animales': 'Ambiente',
+                'Infraestructura': 'Obras Publicas',
+                'Otro': 'General'
+            };
+            return mapa[categoria] || 'General';
+        }
+
         async function subirFoto(base64Data, fileName) {
             if (!base64Data) return null;
             try {
@@ -597,10 +612,10 @@
                 const ext = blob.type.split('/')[1] || 'jpg';
                 const path = `reportes/${Date.now()}_${fileName}.${ext}`;
                 const { data, error } = await sb.storage
-                    .from('fotos-reporte')
+                    .from('fotos-reportes')
                     .upload(path, blob, { contentType: blob.type, upsert: true });
                 if (error) throw error;
-                const { data: urlData } = sb.storage.from('fotos-reporte').getPublicUrl(path);
+                const { data: urlData } = sb.storage.from('fotos-reportes').getPublicUrl(path);
                 return urlData.publicUrl;
             } catch (e) {
                 console.error('Error subiendo foto:', e);
@@ -635,6 +650,7 @@
                     lat: formData.lat || null,
                     lng: formData.lng || null,
                     categoria: formData.categoria,
+                    departamento: getDepartamento(formData.categoria),
                     descripcion: formData.descripcion,
                     fotos: [url1, url2, url3].filter(Boolean),
                     estatus: 'nuevo',
