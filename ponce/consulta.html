@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="config.js"></script>
+
 <script>
 // Aplicar configuración del municipio dinámicamente
 (function() {
@@ -50,10 +50,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root {
-      --color-primario: #1e3a8a;
-      --color-primario-dark: #0f1f3d;
-      --color-secundario: #1e40af;
-      --color-acento: #3b82f6;
+      --color-primario: var(--color-primario);
+      --color-primario-dark: var(--color-primario-dark);
+      --color-secundario: var(--color-secundario);
+      --color-acento: var(--color-acento);
     }
   </style>
   <style>
@@ -92,7 +92,7 @@
     transition: border-color 0.2s;
     color: #0f172a;
   }
-  .input-code:focus { border-color: #1e40af; }
+  .input-code:focus { border-color: var(--color-secundario); }
   .input-code::placeholder { color: #cbd5e1; letter-spacing: 2px; font-size: 20px; }
 
   .btn-search {
@@ -136,7 +136,7 @@
     border: 3px solid white;
     box-shadow: 0 0 0 2px #e2e8f0;
   }
-  .tl-dot.active { box-shadow: 0 0 0 3px #1e40af; }
+  .tl-dot.active { box-shadow: 0 0 0 3px var(--color-secundario); }
 
   /* Status badges */
   .badge {
@@ -148,7 +148,7 @@
     font-weight: 700;
     font-size: 13px;
   }
-  .badge-nuevo     { background: #dbeafe; color: #1e40af; }
+  .badge-nuevo     { background: #dbeafe; color: var(--color-secundario); }
   .badge-pendiente { background: #fef3c7; color: #92400e; }
   .badge-revision  { background: #ede9fe; color: #5b21b6; }
   .badge-completo  { background: #d1fae5; color: #065f46; }
@@ -178,6 +178,7 @@
   }
   .fade-up { animation: fadeUp 0.4s ease forwards; }
 </style>
+  <script src="config.js"></script>
 </head>
 <body class="gradient-bg">
 
@@ -412,7 +413,7 @@ function mostrarResultado(r) {
   // Timeline
   const allStates = ['Nuevo', 'Pendiente', 'En Revisión', 'Completado'];
   const currentIdx = allStates.indexOf(estatus);
-  const tlColors = { 'Nuevo': '#3b82f6', 'Pendiente': '#f59e0b', 'En Revisión': '#8b5cf6', 'Completado': '#10b981' };
+  const tlColors = { 'Nuevo': 'var(--color-acento)', 'Pendiente': '#f59e0b', 'En Revisión': '#8b5cf6', 'Completado': '#10b981' };
   const tlIcons  = { 'Nuevo': 'fa-circle-dot', 'Pendiente': 'fa-clock', 'En Revisión': 'fa-magnifying-glass', 'Completado': 'fa-circle-check' };
 
   const tlEl = document.getElementById('res-timeline');

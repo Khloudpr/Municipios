@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="config.js"></script>
+
 <script>
 // Aplicar configuración del municipio dinámicamente
 (function() {
@@ -50,10 +50,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     :root {
-      --color-primario: #1e3a8a;
-      --color-primario-dark: #0f1f3d;
-      --color-secundario: #1e40af;
-      --color-acento: #3b82f6;
+      --color-primario: var(--color-primario);
+      --color-primario-dark: var(--color-primario-dark);
+      --color-secundario: var(--color-secundario);
+      --color-acento: var(--color-acento);
     }
   </style>
   <style>
@@ -62,12 +62,12 @@
   .gradient-bg { background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 60%, var(--color-secundario) 100%); min-height: 100vh; }
   .card { background: white; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
   .input { width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:15px; outline:none; transition:border-color 0.2s; }
-  .input:focus { border-color:#1e40af; }
+  .input:focus { border-color:var(--color-secundario); }
   .btn-primary { background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%); color:white; padding:13px 28px; border-radius:12px; font-weight:700; font-size:15px; border:none; cursor:pointer; width:100%; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
   .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(30,64,175,0.35); }
   .btn-primary:disabled { opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
   .badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; border-radius:99px; font-weight:700; font-size:12px; }
-  .badge-nuevo { background:#dbeafe; color:#1e40af; }
+  .badge-nuevo { background:#dbeafe; color:var(--color-secundario); }
   .badge-pendiente { background:#fef3c7; color:#92400e; }
   .badge-revision { background:#ede9fe; color:#5b21b6; }
   .badge-completo { background:#d1fae5; color:#065f46; }
@@ -80,6 +80,7 @@
   @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
   .fade-up { animation: fadeUp 0.4s ease forwards; }
 </style>
+  <script src="config.js"></script>
 </head>
 <body class="gradient-bg">
 <div class="min-h-screen flex flex-col items-center justify-center p-4 py-12">
@@ -187,7 +188,7 @@ function mostrarResultados(reportes) {
   const badgeMap = {'nuevo':'badge-nuevo','pendiente':'badge-pendiente','en_progreso':'badge-revision','resuelto':'badge-completo'};
   const iconMap  = {'nuevo':'fa-circle-dot','pendiente':'fa-clock','en_progreso':'fa-magnifying-glass','resuelto':'fa-circle-check'};
   const progressMap = {'nuevo':'10%','pendiente':'40%','en_progreso':'70%','resuelto':'100%'};
-  const colorMap    = {'nuevo':'#3b82f6','pendiente':'#f59e0b','en_progreso':'#8b5cf6','resuelto':'#10b981'};
+  const colorMap    = {'nuevo':'var(--color-acento)','pendiente':'#f59e0b','en_progreso':'#8b5cf6','resuelto':'#10b981'};
   const estatusLabel = {'nuevo':'Nuevo','pendiente':'Pendiente','en_progreso':'En Revisión','resuelto':'Completado'};
   const catIcons = {'Basura':'fa-trash','Arboles':'fa-tree','Árboles':'fa-tree','Alumbrado':'fa-lightbulb','Baches':'fa-road','Agua':'fa-tint','Animales':'fa-paw','Vandalismo':'fa-exclamation-triangle'};
   const list = document.getElementById('reports-list');
@@ -213,7 +214,7 @@ function mostrarResultados(reportes) {
       </div>
       <div class="text-sm text-slate-600 mb-3">${r.ubicacion || 'Sin ubicacion'}</div>
       <div class="progress-track mb-2">
-        <div class="progress-fill" style="width:${progressMap[estatus]||'10%'};background:${colorMap[estatus]||'#3b82f6'}"></div>
+        <div class="progress-fill" style="width:${progressMap[estatus]||'10%'};background:${colorMap[estatus]||'var(--color-acento)'}"></div>
       </div>
       <div class="flex items-center justify-between">
         <span class="text-xs text-slate-400">${fecha}</span>
