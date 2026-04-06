@@ -603,52 +603,42 @@
             }
         });
 
-        // Load Real Stats from Google Sheet
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
-        
+        // Load Real Stats from Supabase
         async function loadRealStats() {
             try {
-                console.log('Cargando stats desde Sheet...');
-                const response = await fetch(SCRIPT_URL);
-                const reportes = await response.json();
-                
-                console.log('Reportes recibidos:', reportes.length);
-                
+                const sb = window.supabase.createClient(
+                    "https://fqwstwkbusjrzcznnwiv.supabase.co",
+                    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo"
+                );
+                const { data: reportes, error } = await sb.from('reportes').select('estatus, fecha_creacion');
+                if (error) throw error;
+
                 const total = reportes.length;
-                const completados = reportes.filter(r => r.estatus === 'Completado').length;
+                const completados = reportes.filter(r => r.estatus === 'resuelto').length;
                 const satisfaction = total > 0 ? Math.round((completados / total) * 100) : 94;
-                
-                let totalHours = 0;
-                let completedCount = 0;
+
+                let totalHours = 0, completedCount = 0;
                 reportes.forEach(r => {
-                    if (r.estatus === 'Completado' && r.fecha) {
-                        const created = new Date(r.fecha);
-                        const now = new Date();
-                        const hours = Math.abs(now - created) / 36e5;
+                    if (r.estatus === 'resuelto' && r.fecha_creacion) {
+                        const hours = Math.abs(new Date() - new Date(r.fecha_creacion)) / 36e5;
                         totalHours += hours;
                         completedCount++;
                     }
                 });
                 const avgHours = completedCount > 0 ? Math.round(totalHours / completedCount) : 24;
-                
-                console.log('Stats calculados:', {total, avgHours, satisfaction});
-                
-                // Update data-target attributes
+
                 const totalCounter = document.querySelector('[data-target="1247"]');
                 const hoursCounter = document.querySelector('[data-target="24"]');
                 const satCounter = document.querySelector('[data-target="94"]');
-                
+
                 if (totalCounter) totalCounter.setAttribute('data-target', total);
                 if (hoursCounter) hoursCounter.setAttribute('data-target', avgHours);
                 if (satCounter) satCounter.setAttribute('data-target', satisfaction);
-                
-                // Animate immediately with real data
+
                 animated = false;
                 animateCounters();
                 animated = true;
-                
-                console.log('Stats actualizados en DOM');
-                
+
             } catch (error) {
                 console.error('Error cargando stats:', error);
             }
@@ -748,5 +738,6 @@
             chk();
         })();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
