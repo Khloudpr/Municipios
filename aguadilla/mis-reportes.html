@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mis Reportes — Aguadilla Reporta</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
@@ -82,7 +83,13 @@
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwf6zkn7u0PO3t9TPkVG2NjoDwRF7-BuSAtP4T0PXaDStulKQBJOXqzWFwm5Nqh6LP-jA/exec";
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
+
+document.addEventListener('DOMContentLoaded', () => {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+});
 
 const urlEmail = new URLSearchParams(window.location.search).get('email');
 if (urlEmail) {
@@ -103,20 +110,14 @@ async function buscarPorEmail() {
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
   try {
-    const res = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'misReportes', email })
-    });
-    const data = await res.json();
-    if (data.result === 'success' && data.reportes && data.reportes.length > 0) {
-      mostrarResultados(data.reportes);
-    } else if (data.result === 'success') {
+    const { data, error } = await sb.from('reportes').select('*').eq('email', email).order('fecha_creacion', { ascending: false });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      mostrarResultados(data);
+    } else {
       errorEl.textContent = 'No encontramos reportes asociados a ese email.';
       errorEl.classList.remove('hidden');
       document.getElementById('results-section').classList.add('hidden');
-    } else {
-      errorEl.textContent = 'Error al buscar. Intenta nuevamente.';
-      errorEl.classList.remove('hidden');
     }
   } catch(e) {
     errorEl.textContent = 'Error de conexion. Intenta nuevamente.';
@@ -129,34 +130,36 @@ async function buscarPorEmail() {
 
 function mostrarResultados(reportes) {
   const total = reportes.length;
-  const resueltos = reportes.filter(r => r.estatus === 'Completado').length;
+  const resueltos = reportes.filter(r => r.estatus === 'resuelto').length;
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-abiertos').textContent = total - resueltos;
   document.getElementById('stat-resueltos').textContent = resueltos;
-  reportes.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
-  const badgeMap = {'Nuevo':'badge-nuevo','Pendiente':'badge-pendiente','En Revision':'badge-revision','En Revisión':'badge-revision','Completado':'badge-completo'};
-  const iconMap  = {'Nuevo':'fa-circle-dot','Pendiente':'fa-clock','En Revision':'fa-magnifying-glass','En Revisión':'fa-magnifying-glass','Completado':'fa-circle-check'};
-  const progressMap = {'Nuevo':'10%','Pendiente':'40%','En Revision':'70%','En Revisión':'70%','Completado':'100%'};
-  const colorMap    = {'Nuevo':'#3b82f6','Pendiente':'#f59e0b','En Revision':'#8b5cf6','En Revisión':'#8b5cf6','Completado':'#10b981'};
+  reportes.sort((a,b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
+  const badgeMap = {'nuevo':'badge-nuevo','pendiente':'badge-pendiente','en_progreso':'badge-revision','resuelto':'badge-completo'};
+  const iconMap  = {'nuevo':'fa-circle-dot','pendiente':'fa-clock','en_progreso':'fa-magnifying-glass','resuelto':'fa-circle-check'};
+  const progressMap = {'nuevo':'10%','pendiente':'40%','en_progreso':'70%','resuelto':'100%'};
+  const colorMap    = {'nuevo':'#3b82f6','pendiente':'#f59e0b','en_progreso':'#8b5cf6','resuelto':'#10b981'};
+  const estatusLabel = {'nuevo':'Nuevo','pendiente':'Pendiente','en_progreso':'En Revisión','resuelto':'Completado'};
   const catIcons = {'Basura':'fa-trash','Arboles':'fa-tree','Árboles':'fa-tree','Alumbrado':'fa-lightbulb','Baches':'fa-road','Agua':'fa-tint','Animales':'fa-paw','Vandalismo':'fa-exclamation-triangle'};
   const list = document.getElementById('reports-list');
   list.innerHTML = reportes.map(r => {
-    const estatus = r.estatus || 'Nuevo';
-    const fecha = r.fecha ? new Date(r.fecha).toLocaleDateString('es-PR', {year:'numeric',month:'short',day:'numeric'}) : '—';
+    const estatus = r.estatus || 'nuevo';
+    const label = estatusLabel[estatus] || estatus;
+    const fecha = r.fecha_creacion ? new Date(r.fecha_creacion).toLocaleDateString('es-PR', {year:'numeric',month:'short',day:'numeric'}) : '—';
     const catIcon = Object.entries(catIcons).find(([k]) => (r.categoria||'').includes(k))?.[1] || 'fa-file-alt';
-    return `<div class="report-card" onclick="window.location.href='consulta.html?codigo=${r.id_reporte}'">
+    return `<div class="report-card" onclick="window.location.href='consulta.html?codigo=${r.id}'">
       <div class="flex items-start justify-between gap-3 mb-3">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
             <i class="fas ${catIcon} text-blue-600 text-sm"></i>
           </div>
           <div>
-            <div class="font-black text-slate-900 text-sm tracking-wide">${r.id_reporte}</div>
+            <div class="font-black text-slate-900 text-sm tracking-wide">${r.id}</div>
             <div class="text-xs text-slate-500">${r.categoria || 'Sin categoria'}</div>
           </div>
         </div>
         <span class="badge ${badgeMap[estatus] || 'badge-nuevo'}">
-          <i class="fas ${iconMap[estatus] || 'fa-circle'} text-xs"></i> ${estatus}
+          <i class="fas ${iconMap[estatus] || 'fa-circle'} text-xs"></i> ${label}
         </span>
       </div>
       <div class="text-sm text-slate-600 mb-3">${r.ubicacion || 'Sin ubicacion'}</div>
