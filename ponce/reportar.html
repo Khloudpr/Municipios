@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
       <style>
     :root {
-      --color-primario: var(--color-primario);
-      --color-primario-dark: var(--color-primario-dark);
+      --color-primario: #1e3a8a;
+      --color-primario-dark: #0f1f3d;
       --color-secundario: var(--color-secundario);
       --color-acento: var(--color-acento);
     }
@@ -31,7 +31,7 @@
         
         /* Gradient Background */
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 100%);
             position: relative;
             min-height: 100vh;
             overflow: visible;
@@ -73,18 +73,18 @@
         
         /* Step Indicator */
         .step { transition: all 0.3s; }
-        .step.active { background: #667eea; color: white; transform: scale(1.1); }
+        .step.active { background: var(--color-primario); color: white; transform: scale(1.1); }
         .step.completed { background: #22c55e; color: white; }
         
         /* Progress Bar */
         .progress-bar {
             transition: width 0.5s ease;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(90deg, var(--color-primario) 0%, var(--color-secundario) 100%);
         }
         
         /* Input Focus */
         .input-focus:focus {
-            border-color: #667eea;
+            border-color: var(--color-primario);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
             outline: none;
         }
@@ -118,7 +118,7 @@
             position: fixed;
             width: 10px;
             height: 10px;
-            background: #667eea;
+            background: var(--color-primario);
             animation: confetti-fall 3s linear;
         }
         
@@ -143,7 +143,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
-                    <img src="https://khloudpr.github.io/aguadilla/assets/logo-aguadilla.png" alt="Aguadilla" class="h-10 w-auto">
+                    <img data-municipio-logo src="" alt="" class="h-10 w-auto" style="display:none">
                     <span class="font-black text-white text-lg hidden sm:inline"><span data-municipio-sistema>Aguadilla Reporta</span></span>
                 </div>
                 <a href="index.html" class="text-white hover:text-white/80 font-bold text-sm">
@@ -219,7 +219,7 @@
                         </div>
                     </div>
                     
-                    <button type="button" onclick="nextStep(1)" class="mt-6 sm:mt-8 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg hover:from-blue-700 hover:to-purple-700 transition shadow-xl">
+                    <button type="button" onclick="nextStep(1)" class="mt-6 sm:mt-8 w-full text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg transition shadow-xl">
                         Siguiente <i class="fas fa-arrow-right ml-2"></i>
                     </button>
                 </div>
@@ -259,7 +259,7 @@
                         <button type="button" onclick="prevStep(2)" class="flex-1 bg-slate-200 text-slate-700 py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg hover:bg-slate-300 transition">
                             <i class="fas fa-arrow-left mr-2"></i>Atrás
                         </button>
-                        <button type="button" onclick="nextStep(2)" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg hover:from-blue-700 hover:to-purple-700 transition shadow-xl">
+                        <button type="button" onclick="nextStep(2)" class="flex-1 text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg transition shadow-xl">
                             Siguiente <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </div>
@@ -327,7 +327,7 @@
                         <button type="button" onclick="prevStep(3)" class="flex-1 bg-slate-200 text-slate-700 py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg hover:bg-slate-300 transition">
                             <i class="fas fa-arrow-left mr-2"></i>Atrás
                         </button>
-                        <button type="button" onclick="nextStep(3)" class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg hover:from-blue-700 hover:to-purple-700 transition shadow-xl">
+                        <button type="button" onclick="nextStep(3)" class="flex-1 text-white py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg transition shadow-xl">
                             Siguiente <i class="fas fa-arrow-right ml-2"></i>
                         </button>
                     </div>
@@ -386,7 +386,7 @@
             
             <div class="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
                 <p class="text-xs sm:text-sm text-slate-600 font-bold mb-2">Tu código:</p>
-                <div class="text-2xl sm:text-3xl font-black text-blue-900" id="tracking-code">AG-2026-00000</div>
+                <div class="text-2xl sm:text-3xl font-black text-blue-900" id="tracking-code">...</div>
                 <p class="text-[10px] sm:text-xs text-slate-500 mt-2">Guarda este código</p>
             </div>
             
@@ -439,9 +439,15 @@
       else { el.style.display = 'none'; }
     });
     // Título página
-    if (document.title.includes('Aguadilla')) {
-      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
-    }
+    document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    // Forzar repaint gradient-bg
+    document.querySelectorAll('.gradient-bg').forEach(el => {
+      el.style.background = `linear-gradient(135deg, ${C.color_primario_dark} 0%, ${C.color_primario} 100%)`;
+    });
+    // Estilo botones principales
+    document.querySelectorAll('.btn-primary-municipio').forEach(el => {
+      el.style.background = C.color_primario;
+    });
   }
   // Ejecutar inmediatamente y también cuando el DOM esté listo
   applyConfig();
@@ -684,13 +690,9 @@
                     subirFoto(formData.foto3, 'foto3')
                 ]);
 
-                // Generar ID único
-                const trackingCode = 'AG-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000);
-
-                // Insertar en Supabase
+                // Insertar en Supabase — el ID lo genera el trigger automáticamente
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
-                const { error } = await sb.from('reportes').insert([{
-                    id: trackingCode,
+                const { data: insertData, error } = await sb.from('reportes').insert([{
                     nombre: formData.nombre + ' ' + formData.apellido,
                     email: formData.email,
                     telefono: formData.telefono || '',
@@ -704,10 +706,11 @@
                     estatus: 'nuevo',
                     prioridad: 'Media',
                     fecha_creacion: new Date().toISOString()
-                }]);
+                }]).select('id').single();
 
                 if (error) throw error;
 
+                const trackingCode = insertData.id;
                 document.getElementById('tracking-code').textContent = trackingCode;
                 const tLink = document.getElementById('tracking-link');
                 if (tLink) tLink.href = 'consulta.html?codigo=' + encodeURIComponent(trackingCode);
