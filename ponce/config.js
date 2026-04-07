@@ -14,16 +14,16 @@ window.MUNICIPIO_CONFIG = {
   supabase_key:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucG95Zndhd2JqcW9ldXVhcHJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDAzMjYsImV4cCI6MjA5MTA3NjMyNn0.vawDmM0T773S-k7H6TSz9JOg9JW58mKrci8_SisgSKI",
 
   // Apariencia - Colores oficiales de Ponce (Rojo y Negro)
-  color_primario:       "#CC0000",
-  color_primario_dark:  "#8B0000",
-  color_secundario:     "#1A1A1A",
-  color_acento:         "#D4AF37",
+  color_primario:      "#CC0000",
+  color_primario_dark: "#8B0000",
+  color_secundario:    "#1A1A1A",
+  color_acento:        "#D4AF37",
 
   // Iniciales para sidebar (cuando no hay logo)
   iniciales:       "PR",
 
-  // Logo (null = usar iniciales)
-  logo_url:        null,
+  // Logo
+  logo_url:        "https://khloudpr.github.io/Municipios/ponce/assets/ponce.jpg",
 
   // Mapa - coordenadas del centro de Ponce
   mapa_lat:        18.0111,
