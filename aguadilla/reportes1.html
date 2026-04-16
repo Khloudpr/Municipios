@@ -91,6 +91,8 @@
 <!-- Lightbox -->
 <div id="photo-lightbox" class="lightbox" onclick="closeLightbox(event)">
     <button class="lightbox-close" onclick="closeLightbox(event)">×</button>
+    <button id="lightbox-prev" onclick="lightboxNav(-1)" style="display:none;position:absolute;left:20px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%)'">‹</button>
+    <button id="lightbox-next" onclick="lightboxNav(1)" style="display:none;position:absolute;right:80px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%)'">›</button>
     <img id="lightbox-img" src="" alt="Evidencia" class="lightbox-image">
     <div id="lightbox-info" class="lightbox-info"></div>
 </div>
@@ -667,8 +669,7 @@ function abrirFotosDirecto(event, id) {
     event.stopPropagation();
     const reporte = allReportes.find(r => r.id === id);
     if (!reporte || !Array.isArray(reporte.fotos) || reporte.fotos.filter(Boolean).length === 0) return;
-    const fotos = reporte.fotos.filter(Boolean);
-    openLightbox(fotos[0], reporte.id, reporte.fecha_creacion);
+    openLightbox(reporte.fotos.filter(Boolean)[0], reporte.id, reporte.fecha_creacion);
 }
 
 // ─── DETALLE MODAL ─────────────────────────────────────────
@@ -769,20 +770,54 @@ function exportarReportes() {
 }
 
 // ─── LIGHTBOX ──────────────────────────────────────────────
+// Lightbox con navegación múltiple
+let lightboxFotos = [];
+let lightboxIndex = 0;
+let lightboxReporteId = '';
+let lightboxFecha = '';
+
 function openLightbox(url, id, fecha) {
-    document.getElementById('lightbox-img').src = url;
-    document.getElementById('lightbox-info').innerHTML = `
-        <span><i class="fas fa-hashtag mr-1"></i>${id}</span>
-        <span><i class="fas fa-calendar mr-1"></i>${new Date(fecha).toLocaleDateString('es-PR')}</span>
-    `;
+    // Buscar el reporte para obtener todas las fotos
+    const reporte = allReportes.find(r => r.id === id);
+    lightboxFotos = reporte && Array.isArray(reporte.fotos) ? reporte.fotos.filter(Boolean) : [url];
+    lightboxIndex = lightboxFotos.indexOf(url);
+    if (lightboxIndex === -1) lightboxIndex = 0;
+    lightboxReporteId = id;
+    lightboxFecha = fecha;
+    renderLightbox();
     document.getElementById('photo-lightbox').classList.add('active');
     document.body.style.overflow = 'hidden';
+}
+
+function renderLightbox() {
+    document.getElementById('lightbox-img').src = lightboxFotos[lightboxIndex];
+    const total = lightboxFotos.length;
+    document.getElementById('lightbox-info').innerHTML = `
+        <span><i class="fas fa-hashtag mr-1"></i>${lightboxReporteId}</span>
+        <span><i class="fas fa-calendar mr-1"></i>${new Date(lightboxFecha).toLocaleDateString('es-PR')}</span>
+        ${total > 1 ? `<span><i class="fas fa-images mr-1"></i>${lightboxIndex + 1} / ${total}</span>` : ''}
+    `;
+    const prev = document.getElementById('lightbox-prev');
+    const next = document.getElementById('lightbox-next');
+    if (total > 1) {
+        prev.style.display = lightboxIndex > 0 ? 'flex' : 'none';
+        next.style.display = lightboxIndex < total - 1 ? 'flex' : 'none';
+    } else {
+        prev.style.display = 'none';
+        next.style.display = 'none';
+    }
+}
+
+function lightboxNav(dir) {
+    lightboxIndex = Math.max(0, Math.min(lightboxFotos.length - 1, lightboxIndex + dir));
+    renderLightbox();
 }
 
 function closeLightbox(event) {
     if (event.target.id === 'photo-lightbox' || event.target.classList.contains('lightbox-close')) {
         document.getElementById('photo-lightbox').classList.remove('active');
         document.body.style.overflow = 'auto';
+        lightboxFotos = [];
     }
 }
 
@@ -887,6 +922,8 @@ document.getElementById('command-palette')?.addEventListener('click', e => {
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeLightbox({ target: { id: 'photo-lightbox' } });
+    if (e.key === 'ArrowRight' && document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(1);
+    if (e.key === 'ArrowLeft' && document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(-1);
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const activeInput = document.querySelector('[id^="comment-input-"]:focus');
         if (activeInput) {
