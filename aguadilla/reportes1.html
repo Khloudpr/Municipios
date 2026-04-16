@@ -249,6 +249,7 @@
                             <th class="p-4 text-left">Ciudadano</th>
                             <th class="p-4 text-left">Categoría</th>
                             <th class="p-4 text-left">Ubicación</th>
+                            <th class="p-4 text-center">Fotos</th>
                             <th class="p-4 text-center">Estatus</th>
                             <th class="p-4 text-center">Prioridad</th>
                             <th class="p-4 text-center">Acciones</th>
@@ -553,6 +554,14 @@ function renderTabla() {
     <td class="p-4 text-xs">${r.categoria || 'Sin categoría'}</td>
     <td class="p-4 text-xs text-slate-500">${r.ubicacion || 'Sin ubicación'}</td>
     <td class="p-4 text-center">
+        ${Array.isArray(r.fotos) && r.fotos.filter(Boolean).length > 0
+            ? `<button onclick="abrirFotosDirecto(event, '${r.id}')" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 px-3 py-1.5 rounded-xl transition text-xs font-black" title="Ver fotos">
+                <i class="fas fa-camera"></i>
+                <span>${r.fotos.filter(Boolean).length}</span>
+               </button>`
+            : ''}
+    </td>
+    <td class="p-4 text-center">
         <select id="sel-${idLimpio}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getEstatusColor(r.estatus)}" onchange="markChanged('${idLimpio}')">
             <option value="nuevo" ${r.estatus === 'nuevo' ? 'selected' : ''}>Nuevo</option>
             <option value="pendiente" ${r.estatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
@@ -651,6 +660,15 @@ async function actualizar(id) {
         btn.innerHTML = 'SAVE';
         btn.disabled = false;
     }
+}
+
+// ─── ABRIR FOTOS DIRECTO DESDE TABLA ──────────────────────
+function abrirFotosDirecto(event, id) {
+    event.stopPropagation();
+    const reporte = allReportes.find(r => r.id === id);
+    if (!reporte || !Array.isArray(reporte.fotos) || reporte.fotos.filter(Boolean).length === 0) return;
+    const fotos = reporte.fotos.filter(Boolean);
+    openLightbox(fotos[0], reporte.id, reporte.fecha_creacion);
 }
 
 // ─── DETALLE MODAL ─────────────────────────────────────────
