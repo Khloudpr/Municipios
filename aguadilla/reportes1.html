@@ -661,8 +661,8 @@ function showReporteDetail(id) {
 
     document.getElementById('modal-title').textContent = id;
 
-    const fotoRaw = reporte.foto_url || reporte.Foto_URL || reporte.foto || '';
-    const fotoUrls = fotoRaw ? fotoRaw.split('|||').map(u => u.trim()).filter(u => u.length > 0) : [];
+    // fotos es un array de URLs en Supabase
+    const fotoUrls = Array.isArray(reporte.fotos) ? reporte.fotos.filter(Boolean) : [];
 
     const content = `
 <div class="grid grid-cols-2 gap-4">
