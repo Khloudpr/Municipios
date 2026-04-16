@@ -6,15 +6,15 @@
     <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-      <style>
+    <style>
     :root {
       --color-primario: #1e3a8a;
       --color-primario-dark: #0f1f3d;
       --color-secundario: #1e40af;
       --color-acento: #3b82f6;
     }
-  </style>
-  <style>
+    </style>
+    <style>
         .filter-btn.active{background-color:var(--color-primario);color:white;border-color:var(--color-primario)}
         .sidebar-link{font-size:0.85rem;letter-spacing:0.05em;font-weight:800}
         body{min-height:100vh;display:flex;flex-direction:column;color:#1e293b;background:#f1f5f9}
@@ -37,8 +37,6 @@
         .breadcrumb .current{color:var(--color-primario)}
         .row-highlight{background:#fef3c7;animation:highlight 2s}
         @keyframes highlight{from{background:#fef3c7}to{background:transparent}}
-        
-        /* Lightbox Ultimate */
         .lightbox{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.95);align-items:center;justify-content:center;animation:fadeIn 0.3s}
         .lightbox.active{display:flex}
         .lightbox-image{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:1rem;box-shadow:0 25px 50px rgba(0,0,0,0.5)}
@@ -46,23 +44,19 @@
         .lightbox-close:hover{transform:scale(1.1);background:#f1f5f9}
         .lightbox-info{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.95);padding:1rem 2rem;border-radius:1rem;font-size:0.875rem;font-weight:700;color:#1e293b;display:flex;gap:2rem}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-
-        /* SLA badges */
-        .sla-vencido { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
-        .sla-urgente { background:#fffbeb; color:#d97706; border:1px solid #fde68a; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
-        .sla-ok { background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
-
-        /* Comments */
-        .comment-bubble { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 16px; margin-bottom: 10px; }
-        .comment-bubble.mine { background: #eff6ff; border-color: #bfdbfe; }
-        .comment-avatar { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; }
-        .comment-input { width: 100%; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; font-size: 14px; resize: none; outline: none; transition: border-color 0.2s; font-family: inherit; }
-        .comment-input:focus { border-color: #1e40af; }
-        .comment-send { background: #1e3a8a; color: white; border: none; border-radius: 10px; padding: 10px 20px; font-weight: 800; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .comment-send:hover { background: #1e40af; transform: translateY(-1px); }
-        .comment-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        @keyframes commentIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .comment-new { animation: commentIn 0.3s ease; }
+        .sla-vencido{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+        .sla-urgente{background:#fffbeb;color:#d97706;border:1px solid #fde68a;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+        .sla-ok{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+        .comment-bubble{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;margin-bottom:10px}
+        .comment-bubble.mine{background:#eff6ff;border-color:#bfdbfe}
+        .comment-avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+        .comment-input{width:100%;border:2px solid #e2e8f0;border-radius:12px;padding:10px 14px;font-size:14px;resize:none;outline:none;transition:border-color 0.2s;font-family:inherit}
+        .comment-input:focus{border-color:#1e40af}
+        .comment-send{background:#1e3a8a;color:white;border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+        .comment-send:hover{background:#1e40af;transform:translateY(-1px)}
+        .comment-send:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+        @keyframes commentIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .comment-new{animation:commentIn 0.3s ease}
     </style>
 </head>
 <body class="bg-slate-100 font-sans">
@@ -94,7 +88,7 @@
     </div>
 </div>
 
-<!-- Lightbox Ultimate -->
+<!-- Lightbox -->
 <div id="photo-lightbox" class="lightbox" onclick="closeLightbox(event)">
     <button class="lightbox-close" onclick="closeLightbox(event)">×</button>
     <img id="lightbox-img" src="" alt="Evidencia" class="lightbox-image">
@@ -138,9 +132,9 @@
 
         <div class="flex items-center gap-3 mb-12">
             <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg"><span data-municipio-iniciales>AR</span></div>
-            <span class="font-black text-xl uppercase italic tracking-tighter">Aguadilla</span>
+            <span class="font-black text-xl uppercase italic tracking-tighter"><span data-municipio-nombre>Aguadilla</span></span>
         </div>
-        
+
         <nav class="space-y-6 flex-1">
             <a href="dashboard1.html" class="sidebar-link flex items-center gap-4 opacity-70 hover:opacity-100 transition-all p-2">
                 <i class="fas fa-chart-pie w-6 text-lg"></i> DASHBOARD
@@ -161,7 +155,7 @@
             <h4 class="text-[9px] font-black uppercase tracking-widest mb-3 text-blue-300">📌 Última Actividad</h4>
             <div id="recent-activity" class="space-y-2 text-xs"></div>
         </div>
-        
+
         <div class="border-t border-blue-800 pt-6 space-y-4">
             <div class="bg-blue-800/50 rounded-2xl p-4">
                 <div class="flex items-center gap-3 mb-2">
@@ -170,16 +164,16 @@
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-xs font-black text-white truncate" id="user-name">Empleado</p>
-                        <p class="text-[9px] text-blue-300 truncate" id="user-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="97f2faf6fefbd7f6f0e2f6f3fefbfbf6b9f4f8fa">[email&#160;protected]</a></p>
+                        <p class="text-[9px] text-blue-300 truncate" id="user-email">empleado@municipio.pr</p>
                     </div>
                 </div>
             </div>
-            
+
             <button onclick="cerrarSesion()" class="btn-logout w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-2xl shadow-lg flex items-center justify-center gap-2 font-black text-sm uppercase tracking-wider">
                 <i class="fas fa-sign-out-alt"></i>Cerrar Sesión
             </button>
         </div>
-        
+
         <div class="pt-4 text-[10px] font-black text-blue-400 uppercase tracking-widest italic text-center">Ultimate Edition v1.0</div>
     </aside>
 
@@ -197,7 +191,7 @@
                     <h1 class="text-3xl md:text-5xl font-black text-slate-800 tracking-tighter italic uppercase">Gestión de Reportes</h1>
                     <p class="text-blue-600 font-black text-xs mt-2 uppercase tracking-[0.3em]">Consola Operativa Municipal</p>
                 </div>
-                
+
                 <div class="flex gap-2 flex-wrap">
                     <button onclick="toggleFocusMode()" id="btn-focus" class="bg-white text-slate-700 px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition text-xs font-black uppercase" title="Focus (F)">
                         <i class="fas fa-eye mr-2"></i><span class="hidden sm:inline">Focus</span>
@@ -218,10 +212,10 @@
             <!-- Filters -->
             <div class="flex gap-2 flex-wrap">
                 <button data-filter="Todos" class="filter-btn active px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Todos</button>
-                <button data-filter="Nuevo" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Nuevos</button>
-                <button data-filter="Pendiente" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Pendientes</button>
-                <button data-filter="En Revisión" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">En Revisión</button>
-                <button data-filter="Completado" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Completados</button>
+                <button data-filter="nuevo" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Nuevos</button>
+                <button data-filter="pendiente" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Pendientes</button>
+                <button data-filter="en_progreso" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">En Revisión</button>
+                <button data-filter="resuelto" class="filter-btn px-4 py-2 rounded-xl text-xs font-black uppercase bg-slate-100 text-slate-600 border-2 border-transparent">Completados</button>
             </div>
         </header>
 
@@ -279,83 +273,108 @@
 
 <script src="config.js"></script>
 <script>
-// Aplicar configuración del municipio dinámicamente
 (function() {
   function applyConfig() {
     const C = window.MUNICIPIO_CONFIG;
     if (!C) return;
-    // CSS variables
     const root = document.documentElement;
     root.style.setProperty('--color-primario', C.color_primario);
     root.style.setProperty('--color-primario-dark', C.color_primario_dark);
     root.style.setProperty('--color-secundario', C.color_secundario);
     root.style.setProperty('--color-acento', C.color_acento);
-    // Meta theme-color
-    const meta = document.getElementById('theme-color-meta');
-    if (meta) meta.content = C.color_primario;
-    // Textos
     document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
     document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
-    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
-    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
     document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
-    // Email placeholder
-    document.querySelectorAll('[data-municipio-email]').forEach(el => {
-      el.placeholder = 'empleado@' + C.email_dominio;
-    });
-    // Logo
-    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
-      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
-      else { el.style.display = 'none'; }
-    });
-    // Título página
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
     if (document.title.includes('Aguadilla')) {
       document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
     }
   }
-  // Ejecutar inmediatamente y también cuando el DOM esté listo
   applyConfig();
   document.addEventListener('DOMContentLoaded', applyConfig);
 })();
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
-let sb;
-let allReportes=[],filteredReportes=[],currentFilter='Todos',focusMode=false,userSession=null;
 
-window.onload = function() {
+let sb;
+let allReportes = [], filteredReportes = [], currentFilter = 'Todos', focusMode = false, userSession = null;
+
+// ─── INIT ──────────────────────────────────────────────────
+window.onload = async function() {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    verificarSesion();
-    cargarReportes();
+    const ok = await verificarSesion();
+    if (!ok) return; // redirigido a login
+    await cargarReportes();
     setupFilters();
     setupKeyboardShortcuts();
     updateRecentActivity();
     checkURLParams();
 };
 
-function verificarSesion() {
-    userSession = JSON.parse(localStorage.getItem('user_session') || 'null');
-    if (!userSession || !userSession.email) {
+// ─── SESIÓN REAL DE SUPABASE ───────────────────────────────
+async function verificarSesion() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+
+        if (!session) {
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Obtener perfil del empleado desde la tabla perfiles
+        const { data: perfil, error } = await sb
+            .from('perfiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+        if (error || !perfil) {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        if (!perfil.activo) {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        if (perfil.rol !== 'empleado' && perfil.rol !== 'admin') {
+            await sb.auth.signOut();
+            window.location.href = 'login.html';
+            return false;
+        }
+
+        // Guardar sesión en memoria y localStorage (compatibilidad)
+        userSession = { ...perfil, email: session.user.email };
+        localStorage.setItem('user_session', JSON.stringify(userSession));
+
+        document.getElementById('user-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
+        document.getElementById('user-email').textContent = session.user.email;
+
+        return true;
+    } catch (e) {
+        console.error('Error verificando sesión:', e);
         window.location.href = 'login.html';
-        return;
+        return false;
     }
-    if (userSession.rol !== 'empleado' && userSession.rol !== 'admin') {
-        window.location.href = 'login.html';
-        return;
-    }
-    document.getElementById('user-name').textContent = `${userSession.nombre} ${userSession.apellido}`;
-    document.getElementById('user-email').textContent = userSession.email;
 }
 
-function cerrarSesion() {
+// ─── CERRAR SESIÓN ─────────────────────────────────────────
+async function cerrarSesion() {
     if (confirm('¿Cerrar sesión?')) {
+        await sb.auth.signOut();
         localStorage.removeItem('user_session');
         window.location.href = 'login.html';
     }
 }
 
+// ─── MOBILE MENU ───────────────────────────────────────────
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
@@ -367,6 +386,7 @@ function toggleMobileMenu() {
     overlay.classList.toggle('pointer-events-auto');
 }
 
+// ─── KEYBOARD SHORTCUTS ────────────────────────────────────
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
@@ -383,14 +403,10 @@ function setupKeyboardShortcuts() {
     });
 }
 
-function showShortcuts() {
-    document.getElementById('shortcuts-help').classList.add('active');
-}
+function showShortcuts() { document.getElementById('shortcuts-help').classList.add('active'); }
+function closeShortcuts() { document.getElementById('shortcuts-help').classList.remove('active'); }
 
-function closeShortcuts() {
-    document.getElementById('shortcuts-help').classList.remove('active');
-}
-
+// ─── COMMAND PALETTE ───────────────────────────────────────
 function openCommandPalette() {
     document.getElementById('command-palette').classList.add('active');
     document.getElementById('command-input').focus();
@@ -406,43 +422,43 @@ document.getElementById('command-input')?.addEventListener('input', e => updateC
 
 function updateCommandResults(query) {
     if (!query) {
-        const html = `
+        document.getElementById('command-results').innerHTML = `
 <div onclick="window.location.href='dashboard1.html'" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-chart-pie text-blue-900"></i><span class="font-bold text-sm">Ir a Dashboard</span></div>
 <div onclick="window.location.href='mapa1.html'" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-map-marked-alt text-blue-900"></i><span class="font-bold text-sm">Ir a Mapa</span></div>
-<div onclick="exportarReportes();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-download text-blue-900"></i><span class="font-bold text-sm">Exportar Reportes</span></div>
-`;
-        document.getElementById('command-results').innerHTML = html;
+<div onclick="exportarReportes();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-download text-blue-900"></i><span class="font-bold text-sm">Exportar Reportes</span></div>`;
         return;
     }
+    const q = query.toLowerCase();
     const matches = allReportes.filter(r =>
-        r.id.toLowerCase().includes(query.toLowerCase()) ||
-        (r.categoría && r.categoría.toLowerCase().includes(query.toLowerCase())) ||
-        (r.ubicación && r.ubicación.toLowerCase().includes(query.toLowerCase())) ||
-        (r.nombre && r.nombre.toLowerCase().includes(query.toLowerCase()))
+        r.id.toLowerCase().includes(q) ||
+        (r.categoria && r.categoria.toLowerCase().includes(q)) ||
+        (r.ubicacion && r.ubicacion.toLowerCase().includes(q)) ||
+        (r.nombre && r.nombre.toLowerCase().includes(q))
     );
-    const html = matches.slice(0, 8).map(r => `
+    document.getElementById('command-results').innerHTML = matches.slice(0, 8).map(r => `
 <div onclick="showReporteDetail('${r.id}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b">
     <div class="font-black text-sm text-blue-900">${r.id}</div>
-    <div class="text-xs text-slate-600">${r.categoría || 'Sin categoría'} • ${r.ubicación || 'Sin ubicación'}</div>
+    <div class="text-xs text-slate-600">${r.categoria || 'Sin categoría'} • ${r.ubicacion || 'Sin ubicación'}</div>
 </div>`).join('') || '<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';
-    document.getElementById('command-results').innerHTML = html;
 }
 
+// ─── FOCUS MODE ────────────────────────────────────────────
 function toggleFocusMode() {
     focusMode = !focusMode;
     document.body.classList.toggle('focus-mode');
     const btn = document.getElementById('btn-focus');
     if (focusMode) {
-        btn.classList.remove('bg-white', 'text-slate-700');
-        btn.classList.add('bg-blue-900', 'text-white');
+        btn.classList.replace('bg-white', 'bg-blue-900');
+        btn.classList.replace('text-slate-700', 'text-white');
         btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i><span class="hidden sm:inline">Exit Focus</span>';
     } else {
-        btn.classList.remove('bg-blue-900', 'text-white');
-        btn.classList.add('bg-white', 'text-slate-700');
+        btn.classList.replace('bg-blue-900', 'bg-white');
+        btn.classList.replace('text-white', 'text-slate-700');
         btn.innerHTML = '<i class="fas fa-eye mr-2"></i><span class="hidden sm:inline">Focus</span>';
     }
 }
 
+// ─── RECENT ACTIVITY ───────────────────────────────────────
 function updateRecentActivity() {
     const activity = (localStorage.getItem('recent_activity') || '').split(',').filter(Boolean).slice(0, 3);
     const html = activity.map(id => `<div class="text-blue-300 hover:text-white cursor-pointer" onclick="showReporteDetail('${id}')"><i class="fas fa-file-alt mr-2 text-[10px]"></i>${id}</div>`).join('');
@@ -459,11 +475,10 @@ function addToRecentActivity(id) {
 function checkURLParams() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
-    if (id) {
-        setTimeout(() => showReporteDetail(id), 500);
-    }
+    if (id) setTimeout(() => showReporteDetail(id), 500);
 }
 
+// ─── FILTERS ───────────────────────────────────────────────
 function setupFilters() {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -473,32 +488,31 @@ function setupFilters() {
     }));
 }
 
+// ─── CARGAR REPORTES ───────────────────────────────────────
 async function cargarReportes() {
-  const syncIcon = document.getElementById('sync-icon');
-  syncIcon.classList.add('fa-spin');
-  try {
-    
-    const { data, error } = await sb
-      .from('reportes')
-      .select('*')
-      .order('fecha_creacion', { ascending: false });
+    const syncIcon = document.getElementById('sync-icon');
+    syncIcon.classList.add('fa-spin');
+    try {
+        const { data, error } = await sb
+            .from('reportes')
+            .select('*')
+            .order('fecha_creacion', { ascending: false });
 
-    if (error) throw error;
-    allReportes = data || [];
-    aplicarFiltro();
-    const ahora = new Date();
-    document.getElementById('sync-status').textContent = ahora.getHours() + ':' + ahora.getMinutes().toString().padStart(2, '0');
-  } catch (e) {
-    console.error('Error cargando reportes:', e);
-  } finally {
-    syncIcon.classList.remove('fa-spin');
-  }
+        if (error) throw error;
+        allReportes = data || [];
+        aplicarFiltro();
+        const ahora = new Date();
+        document.getElementById('sync-status').textContent = ahora.getHours() + ':' + ahora.getMinutes().toString().padStart(2, '0');
+    } catch (e) {
+        console.error('Error cargando reportes:', e);
+    } finally {
+        syncIcon.classList.remove('fa-spin');
+    }
 }
 
-// SLA helper
+// ─── SLA ───────────────────────────────────────────────────
 function getSLABadge(prioridad, fecha, estatus) {
-    if (estatus === 'resuelto') return '';
-    if (!fecha) return '';
+    if (estatus === 'resuelto' || !fecha) return '';
     const SLA = { 'Alta': 2, 'Media': 5, 'Baja': 10 };
     const dias = Math.floor((new Date() - new Date(fecha)) / (1000 * 60 * 60 * 24));
     const limit = SLA[prioridad] || 5;
@@ -507,12 +521,11 @@ function getSLABadge(prioridad, fecha, estatus) {
     return `<span class="sla-ok"><i class="fas fa-check-circle"></i> ${limit - dias}d restantes</span>`;
 }
 
+// ─── FILTRO Y STATS ────────────────────────────────────────
 function aplicarFiltro() {
-    if (currentFilter === 'Todos') {
-        filteredReportes = allReportes;
-    } else {
-        filteredReportes = allReportes.filter(r => r.estatus === currentFilter);
-    }
+    filteredReportes = currentFilter === 'Todos'
+        ? allReportes
+        : allReportes.filter(r => r.estatus === currentFilter);
     updateStats();
     renderTabla();
 }
@@ -524,9 +537,10 @@ function updateStats() {
     document.getElementById('stat-completados').textContent = allReportes.filter(r => r.estatus === 'resuelto').length;
 }
 
+// ─── RENDER TABLA ──────────────────────────────────────────
 function renderTabla() {
     const html = filteredReportes.map(r => {
-        const idLimpio = String(r.id).replace('DM-','').replace('AG-','');
+        const idLimpio = String(r.id).replace('DM-', '').replace('AG-', '');
         return `
 <tr class="border-b hover:bg-slate-50 transition" id="row-${idLimpio}">
     <td class="p-4">
@@ -536,11 +550,11 @@ function renderTabla() {
         </div>
     </td>
     <td class="p-4 text-xs font-bold">${r.nombre || 'Sin nombre'}</td>
-    <td class="p-4 text-xs">${r.categoría || r.categoria || 'Sin categoría'}</td>
-    <td class="p-4 text-xs text-slate-500">${r.ubicación || r.ubicacion || 'Sin ubicación'}</td>
+    <td class="p-4 text-xs">${r.categoria || 'Sin categoría'}</td>
+    <td class="p-4 text-xs text-slate-500">${r.ubicacion || 'Sin ubicación'}</td>
     <td class="p-4 text-center">
         <select id="sel-${idLimpio}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getEstatusColor(r.estatus)}" onchange="markChanged('${idLimpio}')">
-            <option value="pendiente" ${r.estatus === 'nuevo' ? 'selected' : ''}>Nuevo</option>
+            <option value="nuevo" ${r.estatus === 'nuevo' ? 'selected' : ''}>Nuevo</option>
             <option value="pendiente" ${r.estatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
             <option value="en_progreso" ${r.estatus === 'en_progreso' ? 'selected' : ''}>En Revisión</option>
             <option value="resuelto" ${r.estatus === 'resuelto' ? 'selected' : ''}>Completado</option>
@@ -563,10 +577,10 @@ function renderTabla() {
 
 function getEstatusColor(estatus) {
     const colors = {
-        'Nuevo': 'bg-red-50 text-red-600 border-red-200',
-        'Pendiente': 'bg-orange-50 text-orange-600 border-orange-200',
-        'En Revisión': 'bg-blue-50 text-blue-600 border-blue-200',
-        'Completado': 'bg-green-50 text-green-600 border-green-200'
+        'nuevo': 'bg-red-50 text-red-600 border-red-200',
+        'pendiente': 'bg-orange-50 text-orange-600 border-orange-200',
+        'en_progreso': 'bg-blue-50 text-blue-600 border-blue-200',
+        'resuelto': 'bg-green-50 text-green-600 border-green-200'
     };
     return colors[estatus] || 'bg-slate-50 text-slate-600 border-slate-200';
 }
@@ -582,93 +596,92 @@ function getPrioridadColor(prioridad) {
 
 function markChanged(id) {
     const btn = document.getElementById(`btn-${id}`);
+    if (!btn) return;
     btn.classList.remove('bg-blue-900');
     btn.classList.add('bg-green-600', 'animate-pulse');
     btn.innerHTML = '<i class="fas fa-save mr-1"></i>GUARDAR';
 }
 
+// ─── ACTUALIZAR REPORTE ────────────────────────────────────
+// Solo actualiza estatus y prioridad (campos permitidos para empleados)
 async function actualizar(id) {
-    const btn = (event && event.currentTarget) ? event.currentTarget : document.getElementById(`btn-${String(id).replace('DM-','').replace('AG-','')}`);
     const idLimpio = String(id).replace('DM-', '').replace('AG-', '');
-    const estatusElement = document.getElementById(`sel-${idLimpio}`);
-    const prioridadElement = document.getElementById(`prio-${idLimpio}`);
-    
-    if (!estatusElement || !prioridadElement) {
-        alert('Error: elementos no encontrados');
-        return;
-    }
-    
-    const estatus = estatusElement.value;
-    const prioridad = prioridadElement.value;
-    
+    const btn = document.getElementById(`btn-${idLimpio}`);
+    const estatusEl = document.getElementById(`sel-${idLimpio}`);
+    const prioridadEl = document.getElementById(`prio-${idLimpio}`);
+
+    if (!estatusEl || !prioridadEl) { alert('Error: elementos no encontrados'); return; }
+
+    const estatus = estatusEl.value;
+    const prioridad = prioridadEl.value;
+
     btn.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
     btn.disabled = true;
-    
+
     try {
-        
+        // Solo se envían los campos permitidos: estatus y prioridad
         const { error } = await sb
             .from('reportes')
             .update({ estatus, prioridad })
             .eq('id', id);
-        
+
         if (error) throw error;
-        
+
         btn.innerHTML = '<i class="fas fa-check"></i>';
-        btn.classList.remove('bg-blue-900');
+        btn.classList.remove('bg-blue-900', 'bg-green-600', 'animate-pulse');
         btn.classList.add('bg-green-700');
+
         setTimeout(() => {
             btn.innerHTML = 'SAVE';
             btn.classList.remove('bg-green-700');
             btn.classList.add('bg-blue-900');
             btn.disabled = false;
         }, 2000);
-        
+
         const row = document.getElementById(`row-${idLimpio}`);
         if (row) row.classList.add('row-highlight');
-        
+
         // Actualizar en memoria
         const idx = allReportes.findIndex(r => r.id === id);
         if (idx !== -1) { allReportes[idx].estatus = estatus; allReportes[idx].prioridad = prioridad; }
-        
-    } catch (error) {
-        console.error(error);
-        alert('Error al actualizar: ' + error.message);
+
+    } catch (e) {
+        console.error(e);
+        alert('Error al actualizar: ' + e.message);
         btn.innerHTML = 'SAVE';
         btn.disabled = false;
     }
 }
 
+// ─── DETALLE MODAL ─────────────────────────────────────────
 function showReporteDetail(id) {
     addToRecentActivity(id);
     const reporte = allReportes.find(r => r.id === id);
-    if (!reporte) {
-        alert('Reporte no encontrado');
-        return;
-    }
+    if (!reporte) { alert('Reporte no encontrado'); return; }
+
     document.getElementById('modal-title').textContent = id;
-    
-    // Get foto URL - handle multiple comma-separated URLs
-    const fotoRaw = reporte.foto_url || reporte.Foto_URL || reporte['Foto_URL'] || reporte.foto || '';
+
+    const fotoRaw = reporte.foto_url || reporte.Foto_URL || reporte.foto || '';
     const fotoUrls = fotoRaw ? fotoRaw.split('|||').map(u => u.trim()).filter(u => u.length > 0) : [];
-    const fotoUrl = fotoUrls[0] || ''; // first photo for backward compat
 
     const content = `
 <div class="grid grid-cols-2 gap-4">
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Ciudadano</p><p class="text-sm font-bold">${reporte.nombre || 'Sin nombre'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Email</p><p class="text-sm">${reporte.email || 'Sin email'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoría || reporte.categoria || 'Sin categoría'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoria || 'Sin categoría'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad ? reporte.prioridad.charAt(0).toUpperCase() + reporte.prioridad.slice(1) : 'Media'}</p></div>
-    ${reporte.estatus ? reporte.estatus.charAt(0).toUpperCase() + reporte.estatus.slice(1).replace('_', ' ') : '—'}
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus ? reporte.estatus.charAt(0).toUpperCase() + reporte.estatus.slice(1).replace('_', ' ') : '—'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm">${new Date(reporte.fecha_creacion).toLocaleDateString('es-PR')}</p></div>
     <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">SLA</p><p class="text-sm">${getSLABadge(reporte.prioridad, reporte.fecha_creacion, reporte.estatus) || '<span class="text-green-600 font-semibold">✓ Completado</span>'}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicación || reporte.ubicacion || 'Sin ubicación'}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripción || reporte.descripcion || 'Sin descripción'}</p></div>
-    ${fotoUrls.length > 0 ? `<div class="col-span-2">
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicacion || 'Sin ubicación'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripcion || 'Sin descripción'}</p></div>
+    ${fotoUrls.length > 0 ? `
+    <div class="col-span-2">
         <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica <span class="text-slate-300 font-normal">(${fotoUrls.length} foto${fotoUrls.length > 1 ? 's' : ''})</span></p>
         <div class="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
             <div class="flex gap-3 flex-wrap mb-3">
                 ${fotoUrls.map((url, idx) => `
-                <img src="${url}" alt="Foto ${idx+1}" 
+                <img src="${url}" alt="Foto ${idx+1}"
                     class="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-blue-500 transition"
                     onclick="openLightbox('${url}', '${reporte.id}', '${reporte.fecha_creacion}')"
                     onerror="this.onerror=null;this.style.display='none'">
@@ -680,8 +693,16 @@ function showReporteDetail(id) {
             </button>
         </div>
     </div>` : ''}
-    ${reporte.latitud && reporte.longitud ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Coordenadas GPS</p><p class="text-sm font-mono">${reporte.latitud}, ${reporte.longitud}</p><button onclick="window.open('https://www.google.com/maps?q=${reporte.latitud},${reporte.longitud}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline"><i class="fas fa-map-marker-alt mr-1"></i>Ver en Google Maps</button></div>` : ''}
+    ${reporte.lat && reporte.lng ? `
+    <div class="col-span-2">
+        <p class="text-xs font-black text-slate-400 uppercase mb-1">Coordenadas GPS</p>
+        <p class="text-sm font-mono">${reporte.lat}, ${reporte.lng}</p>
+        <button onclick="window.open('https://www.google.com/maps?q=${reporte.lat},${reporte.lng}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline">
+            <i class="fas fa-map-marker-alt mr-1"></i>Ver en Google Maps
+        </button>
+    </div>` : ''}
 </div>`;
+
     document.getElementById('modal-content').innerHTML = content + `
 <div class="mt-8 pt-6 border-t-2 border-slate-100">
     <div class="flex items-center gap-2 mb-4">
@@ -703,9 +724,9 @@ function showReporteDetail(id) {
     </div>
     <p class="text-xs text-slate-400 mt-2"><i class="fas fa-lock mr-1"></i>Solo visible para empleados — el ciudadano no ve estas notas</p>
 </div>`;
+
     document.getElementById('modal-actions').innerHTML = '<button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-black uppercase text-sm hover:bg-slate-200 transition">Cerrar</button>';
     document.getElementById('detail-modal').classList.add('active');
-    // Load comments after modal opens
     setTimeout(() => cargarComentarios(id), 100);
 }
 
@@ -713,18 +734,23 @@ function closeModal() {
     document.getElementById('detail-modal').classList.remove('active');
 }
 
+// ─── EXPORTAR ──────────────────────────────────────────────
 function exportarReportes() {
     let csv = 'ID,Ciudadano,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n';
-    filteredReportes.forEach(r => csv += `${r.id},"${r.nombre || ''}","${r.categoría || r.categoria}","${r.ubicación || r.ubicacion}",${r.estatus},${r.prioridad || 'Media'},${reporte.fecha_creacion}\n`);
+    filteredReportes.forEach(r => {
+        csv += `${r.id},"${r.nombre || ''}","${r.categoria || ''}","${r.ubicacion || ''}",${r.estatus},${r.prioridad || 'Media'},${r.fecha_creacion}\n`;
+    });
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = ``${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-reportes-`${new Date().toISOString().split('T')[0]}.csv`;
+    const nombre = window.MUNICIPIO_CONFIG ? window.MUNICIPIO_CONFIG.nombre.toLowerCase() : 'municipio';
+    a.download = `${nombre}-reportes-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
 }
 
+// ─── LIGHTBOX ──────────────────────────────────────────────
 function openLightbox(url, id, fecha) {
     document.getElementById('lightbox-img').src = url;
     document.getElementById('lightbox-info').innerHTML = `
@@ -742,32 +768,30 @@ function closeLightbox(event) {
     }
 }
 
-document.getElementById('detail-modal')?.addEventListener('click', e => {
-    if (e.target.id === 'detail-modal') closeModal();
-});
-
-// ─── COMENTARIOS INTERNOS ──────────────────────────────────
+// ─── COMENTARIOS ───────────────────────────────────────────
 const AVATAR_COLORS_C = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
-function avatarColorC(name) { let h=0; for(let c of (name||'')) h+=c.charCodeAt(0); return AVATAR_COLORS_C[h%AVATAR_COLORS_C.length]; }
+function avatarColorC(name) {
+    let h = 0;
+    for (let c of (name || '')) h += c.charCodeAt(0);
+    return AVATAR_COLORS_C[h % AVATAR_COLORS_C.length];
+}
 
 async function cargarComentarios(idReporte) {
-    const session = JSON.parse(localStorage.getItem('user_session') || '{}');
     try {
-        
         const { data, error } = await sb
             .from('comentarios')
             .select('*')
             .eq('id_reporte', idReporte)
             .order('fecha', { ascending: true });
-        
+
         if (error) throw error;
-        renderComentarios(idReporte, data || [], session);
-    } catch(e) { 
-        console.error('Error loading comments:', e); 
+        renderComentarios(idReporte, data || []);
+    } catch (e) {
+        console.error('Error loading comments:', e);
     }
 }
 
-function renderComentarios(idReporte, comentarios, session) {
+function renderComentarios(idReporte, comentarios) {
     const list = document.getElementById('comments-list-' + idReporte);
     const empty = document.getElementById('comments-empty-' + idReporte);
     const count = document.getElementById('comment-count-' + idReporte);
@@ -782,10 +806,10 @@ function renderComentarios(idReporte, comentarios, session) {
     if (empty) empty.style.display = 'none';
 
     list.innerHTML = comentarios.map(c => {
-        const isMine = c.autor_email === session.email;
-        const initials = (c.autor || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const isMine = c.autor_email === userSession?.email;
+        const initials = (c.autor || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
         const color = avatarColorC(c.autor);
-        const fecha = c.fecha ? new Date(c.fecha).toLocaleString('es-PR', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        const fecha = c.fecha ? new Date(c.fecha).toLocaleString('es-PR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
         return `<div class="comment-bubble ${isMine ? 'mine' : ''} flex gap-3">
             <div class="comment-avatar text-white" style="background:${color}">${initials}</div>
             <div class="flex-1">
@@ -803,30 +827,30 @@ function renderComentarios(idReporte, comentarios, session) {
 }
 
 async function enviarComentario(idReporte) {
-    const session = JSON.parse(localStorage.getItem('user_session') || '{}');
     const input = document.getElementById('comment-input-' + idReporte);
     const btn = document.getElementById('comment-btn-' + idReporte);
     const texto = input ? input.value.trim() : '';
     if (!texto) return;
-    if (!session.email) { alert('Debes iniciar sesión'); return; }
+    if (!userSession?.email) { alert('Debes iniciar sesión'); return; }
+
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
     try {
-        
         const { error } = await sb
             .from('comentarios')
             .insert({
                 id_reporte: idReporte,
                 texto: texto,
-                autor: (session.nombre || '') + ' ' + (session.apellido || ''),
-                autor_email: session.email,
+                autor: `${userSession.nombre || ''} ${userSession.apellido || ''}`.trim(),
+                autor_email: userSession.email,
                 fecha: new Date().toISOString()
             });
-        
+
         if (error) throw error;
         input.value = '';
         cargarComentarios(idReporte);
-    } catch(e) {
+    } catch (e) {
         alert('Error al guardar la nota: ' + e.message);
     } finally {
         btn.disabled = false;
@@ -834,24 +858,23 @@ async function enviarComentario(idReporte) {
     }
 }
 
-// Send comment with Ctrl+Enter
-document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        const activeInput = document.querySelector('[id^="comment-input-"]:focus');
-        if (activeInput) {
-            const id = activeInput.id.replace('comment-input-', '');
-            enviarComentario(id);
-        }
-    }
+// ─── EVENT LISTENERS ───────────────────────────────────────
+document.getElementById('detail-modal')?.addEventListener('click', e => {
+    if (e.target.id === 'detail-modal') closeModal();
 });
 
 document.getElementById('command-palette')?.addEventListener('click', e => {
     if (e.target.id === 'command-palette') closeCommandPalette();
 });
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeLightbox({target: {id: 'photo-lightbox'}});
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeLightbox({ target: { id: 'photo-lightbox' } });
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const activeInput = document.querySelector('[id^="comment-input-"]:focus');
+        if (activeInput) {
+            const id = activeInput.id.replace('comment-input-', '');
+            enviarComentario(id);
+        }
     }
 });
 </script>
