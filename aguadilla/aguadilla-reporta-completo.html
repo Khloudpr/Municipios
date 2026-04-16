@@ -685,13 +685,9 @@
                     subirFoto(formData.foto3, 'foto3')
                 ]);
 
-                // Generar ID único
-                const trackingCode = 'AG-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 90000) + 10000);
-
-                // Insertar en Supabase
+                // Insertar en Supabase — el trigger genera el ID automáticamente
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
-                const { error } = await sb.from('reportes').insert([{
-                    id: trackingCode,
+                const { data: insertData, error } = await sb.from('reportes').insert([{
                     nombre: formData.nombre + ' ' + formData.apellido,
                     email: formData.email,
                     telefono: formData.telefono || '',
@@ -703,11 +699,15 @@
                     descripcion: formData.descripcion,
                     fotos: [url1, url2, url3].filter(Boolean),
                     estatus: 'nuevo',
-                    prioridad: 'Media',
-                    fecha_creacion: new Date().toISOString()
-                }]);
+                    prioridad: 'Media'
+                }])
+                .select('id')
+                .single();
 
                 if (error) throw error;
+
+                // Usar el ID real generado por el trigger (ej: AG-0001)
+                const trackingCode = insertData.id;
 
                 document.getElementById('tracking-code').textContent = trackingCode;
                 const tLink = document.getElementById('tracking-link');
