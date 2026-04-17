@@ -369,7 +369,7 @@ function updateCommandResults(query){if(!query){const html=`
 <div onclick="window.location.href='reportes1.html'" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-clipboard-list text-blue-900"></i><span class="font-bold text-sm">Ir a Reportes</span></div>
 <div onclick="toggleHeatmap();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-fire text-blue-900"></i><span class="font-bold text-sm">Toggle Heatmap</span></div>
 <div onclick="exportarCSV();closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-download text-blue-900"></i><span class="font-bold text-sm">Exportar CSV</span></div>
-`;document.getElementById('command-results').innerHTML=html;return}const matches=cacheReportes.filter(r=>r.id_reporte.toLowerCase().includes(query.toLowerCase())||(r.categoría&&r.categoría.toLowerCase().includes(query.toLowerCase()))||(r.ubicación&&r.ubicación.toLowerCase().includes(query.toLowerCase())));const html=matches.slice(0,8).map(r=>`<div onclick="zoomToReporte('${r.id_reporte}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b"><div class="font-black text-sm text-blue-900">${r.id_reporte}</div><div class="text-xs text-slate-600">${r.categoría||'Sin categoría'} • ${r.ubicación||'Sin ubicación'}</div></div>`).join('')||'<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';document.getElementById('command-results').innerHTML=html}
+`;document.getElementById('command-results').innerHTML=html;return}const matches=cacheReportes.filter(r=>r.id.toLowerCase().includes(query.toLowerCase())||(r.categoria&&r.categoria.toLowerCase().includes(query.toLowerCase()))||(r.ubicacion&&r.ubicacion.toLowerCase().includes(query.toLowerCase())));const html=matches.slice(0,8).map(r=>`<div onclick="zoomToReporte('${r.id}');closeCommandPalette()" class="p-4 hover:bg-slate-50 cursor-pointer border-b"><div class="font-black text-sm text-blue-900">${r.id}</div><div class="text-xs text-slate-600">${r.categoria||'Sin categoría'} • ${r.ubicacion||'Sin ubicación'}</div></div>`).join('')||'<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';document.getElementById('command-results').innerHTML=html}
 
 function toggleFocusMode(){focusMode=!focusMode;document.body.classList.toggle('focus-mode')}
 
@@ -389,19 +389,19 @@ function renderizarZonas(areasCount){const listaHTML=Object.entries(areasCount).
 
 function zoomToZona(zonaName){const reportesZona=cacheReportes.filter(r=>(r.ubicacion||"Sin zona")===zonaName);if(reportesZona.length>0){const lats=reportesZona.map(r=>parseFloat(r.lat)).filter(l=>!isNaN(l)),lngs=reportesZona.map(r=>parseFloat(r.lng)).filter(l=>!isNaN(l));if(lats.length>0&&lngs.length>0){const bounds=L.latLngBounds(lats.map((lat,i)=>[lat,lngs[i]]));map.fitBounds(bounds,{padding:[50,50],maxZoom:15})}}}
 
-function zoomToReporte(id){const reporte=cacheReportes.find(r=>r.id_reporte===id);if(!reporte){alert('Reporte no encontrado');return}const lat=parseFloat(reporte.latitud),lng=parseFloat(reporte.longitud);if(!isNaN(lat)&&!isNaN(lng)){map.setView([lat,lng],16);setTimeout(()=>showReporteDetail(id),500)}}
+function zoomToReporte(id){const reporte=cacheReportes.find(r=>r.id===id);if(!reporte){alert('Reporte no encontrado');return}const lat=parseFloat(reporte.lat),lng=parseFloat(reporte.lng);if(!isNaN(lat)&&!isNaN(lng)){map.setView([lat,lng],16);setTimeout(()=>showReporteDetail(id),500)}}
 
 function toggleHeatmap(){heatmapActive=!heatmapActive;const btn=document.getElementById('btn-heatmap');if(heatmapActive){map.addLayer(heatLayer);map.removeLayer(markersCluster);btn.classList.add('bg-red-500','text-white');btn.classList.remove('bg-white','text-slate-700')}else{map.removeLayer(heatLayer);map.addLayer(markersCluster);btn.classList.remove('bg-red-500','text-white');btn.classList.add('bg-white','text-slate-700')}}
 
-function buscarReporte(){const query=document.getElementById('search-input').value.toLowerCase().trim();if(!query){alert('Ingresa un término de búsqueda');return}const encontrados=cacheReportes.filter(r=>{const id=r.id_reporte.toString().toLowerCase(),cat=(r.categoría||r.categoria||'').toLowerCase(),ubi=(r.ubicación||r.ubicacion||'').toLowerCase();return id.includes(query)||cat.includes(query)||ubi.includes(query)});if(encontrados.length===0){alert(`No se encontraron reportes con: "${query}"`);return}zoomToReporte(encontrados[0].id_reporte)}
+function buscarReporte(){const query=document.getElementById('search-input').value.toLowerCase().trim();if(!query){alert('Ingresa un término de búsqueda');return}const encontrados=cacheReportes.filter(r=>{const id=r.id.toString().toLowerCase(),cat=(r.categoría||r.categoria||'').toLowerCase(),ubi=(r.ubicación||r.ubicacion||'').toLowerCase();return id.includes(query)||cat.includes(query)||ubi.includes(query)});if(encontrados.length===0){alert(`No se encontraron reportes con: "${query}"`);return}zoomToReporte(encontrados[0].id)}
 
-function exportarCSV(){const filtrados=cacheReportes.filter(rep=>currentFilter==='Todos'||rep.estatus===currentFilter);if(filtrados.length===0){alert('No hay reportes para exportar');return}let csv='ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha,Latitud,Longitud\n';filtrados.forEach(r=>csv+=`${r.id_reporte},"${r.categoría||r.categoria||''}","${r.ubicación||r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha||''},${r.latitud||''},${r.longitud||''}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=``${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-mapa-`${currentFilter}-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
+function exportarCSV(){const filtrados=cacheReportes.filter(rep=>currentFilter==='Todos'||rep.estatus===currentFilter);if(filtrados.length===0){alert('No hay reportes para exportar');return}let csv='ID,Categoria,Ubicacion,Estatus,Prioridad,Fecha,Latitud,Longitud\n';filtrados.forEach(r=>csv+=`${r.id},"${r.categoria||''}","${r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha_creacion||''},${r.lat||''},${r.lng||''}\n`);const blob=new Blob([csv],{type:'text/csv'}),url=window.URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${window.MUNICIPIO_CONFIG.nombre.toLowerCase()}-mapa-${currentFilter}-${new Date().toISOString().split('T')[0]}.csv`;a.click();window.URL.revokeObjectURL(url)}
 
 
 function showReporteDetail(id) {
     currentReporteId = id;
     addToRecentActivity(id);
-    const reporte = cacheReportes.find(r => r.id_reporte === id);
+    const reporte = cacheReportes.find(r => r.id === id);
     if (!reporte) {
         alert('Reporte no encontrado');
         return;
@@ -423,14 +423,14 @@ function showReporteDetail(id) {
     ${fotoUrl ? `<div class="col-span-2">
         <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica</p>
         <div class="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
-            <img src="${fotoUrl}" alt="Preview" class="w-48 h-48 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23e2e8f0%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2216%22>📷 Click para ver</text></svg>'; this.onclick=null; this.style.cursor='default';" onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')">
-            <button onclick="openLightbox('${fotoUrl}', '${reporte.id_reporte}', '${reporte.fecha}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
+            <img src="${fotoUrl}" alt="Preview" class="w-48 h-48 object-cover rounded-lg mb-3 cursor-pointer hover:opacity-80 transition" onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22><rect fill=%22%23e2e8f0%22 width=%22200%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2216%22>📷 Click para ver</text></svg>'; this.onclick=null; this.style.cursor='default';" onclick="openLightbox('${fotoUrl}', '${reporte.id}', '${reporte.fecha_creacion}')">
+            <button onclick="openLightbox('${fotoUrl}', '${reporte.id}', '${reporte.fecha_creacion}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
                 <i class="fas fa-search-plus"></i>
                 Ver Foto Completa
             </button>
         </div>
     </div>` : ''}
-    ${reporte.latitud && reporte.longitud ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">GPS</p><p class="text-sm font-mono">${reporte.latitud}, ${reporte.longitud}</p><button onclick="window.open('https://www.google.com/maps?q=${reporte.latitud},${reporte.longitud}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline"><i class="fas fa-search-plus mr-1"></i>Ver en Google Maps</button></div>` : ''}
+    ${reporte.lat && reporte.lng ? `<div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">GPS</p><p class="text-sm font-mono">${reporte.lat}, ${reporte.lng}</p><button onclick="window.open('https://www.google.com/maps?q=${reporte.lat},${reporte.lng}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline"><i class="fas fa-search-plus mr-1"></i>Ver en Google Maps</button></div>` : ''}
 </div>`;
     document.getElementById('modal-content').innerHTML = content;
     document.getElementById('detail-modal').classList.add('active');
@@ -457,7 +457,7 @@ function closeModal(){document.getElementById('detail-modal').classList.remove('
 
 function goToReportes(){window.location.href=currentReporteId?`reportes1.html?id=${currentReporteId}`:'reportes1.html'}
 
-document.getElementById('detail-modal')?.addEve
+document.getElementById('detail-modal')?.addEventListener('click',e=>{if(e.target.id==='detail-modal')closeModal()});
 
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
