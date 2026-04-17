@@ -403,9 +403,10 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb;
 let allReportes=[],filteredReportes=[],currentPeriod=7,chartEstatus,chartCategorias,chartTendencia,chartType='bar',focusMode=false,notifications=[],currentReporteId=null;
 
-window.onload=()=>{
+window.onload=async ()=>{
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  verificarSesion();
+  const ok = await verificarSesion();
+  if (!ok) return;
   fetchDashboardData();
   setupFilters();
   setupKeyboardShortcuts();
@@ -424,9 +425,29 @@ window.onload=()=>{
                 window.location.href = 'hub.html';
             }
         })();
-        function verificarSesion(){const s=JSON.parse(localStorage.getItem('user_session')||'null');if(!s||!s.email||s.rol!=='empleado'&&s.rol!=='admin'){window.location.href='index.html';return}document.getElementById('user-name').textContent=`${s.nombre} ${s.apellido}`;document.getElementById('user-email').textContent=s.email;if(s.rol==='admin'){const el=document.getElementById('link-empleados');if(el)el.style.display='flex';}}
+        async function verificarSesion() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', session.user.id).single();
+        if (error || !perfil || !perfil.activo) { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        if (perfil.rol !== 'empleado' && perfil.rol !== 'admin') { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        const userSession = { ...perfil, email: session.user.email };
+        localStorage.setItem('user_session', JSON.stringify(userSession));
+        document.getElementById('user-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
+        document.getElementById('user-email').textContent = session.user.email;
+        if (perfil.rol === 'admin') { const el = document.getElementById('link-empleados'); if (el) el.style.display = 'flex'; }
+        return true;
+    } catch(e) { window.location.href = 'login.html'; return false; }
+}
 
-function cerrarSesion(){if(confirm('¿Estás seguro que deseas cerrar sesión?')){localStorage.removeItem('user_session');window.location.href='index.html'}}
+async function cerrarSesion() {
+    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
+        await sb.auth.signOut();
+        localStorage.removeItem('user_session');
+        window.location.href = 'login.html';
+    }
+}
 
 function toggleMobileMenu(){const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('mobile-overlay');if(sidebar.classList.contains('-translate-x-full')){sidebar.classList.remove('-translate-x-full');sidebar.classList.add('translate-x-0');overlay.classList.remove('opacity-0','pointer-events-none');overlay.classList.add('opacity-100','pointer-events-auto')}else{sidebar.classList.add('-translate-x-full');sidebar.classList.remove('translate-x-0');overlay.classList.add('opacity-0','pointer-events-none');overlay.classList.remove('opacity-100','pointer-events-auto')}}
 
@@ -442,7 +463,7 @@ function closeCommandPalette(){document.getElementById('command-palette').classL
 document.getElementById('command-input')?.addEventListener('input',e=>updateCommandResults(e.target.value));
 document.getElementById('command-input')?.addEventListener('keydown',e=>{if(e.key==='Escape')closeCommandPalette()});
 
-function updateCommandResults(query){const results=[];if(!query){results.push({icon:'chart-pie',text:'Ir a Dashboard',action:()=>window.location.href='dashboard1.html'},{icon:'clipboard-list',text:'Ir a Reportes',action:()=>window.location.href='reportes1.html'},{icon:'map-marked-alt',text:'Ir a Mapa',action:()=>window.location.href='mapa1.html'},{icon:'download',text:'Exportar Dashboard',action:exportarReporte},{icon:'eye',text:'Activar Modo Focus',action:toggleFocusMode})}else{const matches=allReportes.filter(r=>r.id_reporte.toLowerCase().includes(query.toLowerCase())||(r.categoría&&r.categoría.toLowerCase().includes(query.toLowerCase()))||(r.ubicación&&r.ubicación.toLowerCase().includes(query.toLowerCase())));matches.slice(0,5).forEach(r=>results.push({icon:'file-alt',text:`${r.id_reporte} - ${r.categoría||'Sin categoría'}`,action:()=>showReporteDetail(r.id_reporte)}))}const html=results.map(r=>`<div onclick="executeCommand(this)" data-action="${r.text}" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-${r.icon} text-blue-900"></i><span class="font-bold text-sm">${r.text}</span></div>`).join('');document.getElementById('command-results').innerHTML=html;window.commandActions=results.reduce((acc,r)=>{acc[r.text]=r.action;return acc},{})}
+function updateCommandResults(query){const results=[];if(!query){results.push({icon:'chart-pie',text:'Ir a Dashboard',action:()=>window.location.href='dashboard1.html'},{icon:'clipboard-list',text:'Ir a Reportes',action:()=>window.location.href='reportes1.html'},{icon:'map-marked-alt',text:'Ir a Mapa',action:()=>window.location.href='mapa1.html'},{icon:'download',text:'Exportar Dashboard',action:exportarReporte},{icon:'eye',text:'Activar Modo Focus',action:toggleFocusMode})}else{const matches=allReportes.filter(r=>r.id.toLowerCase().includes(query.toLowerCase())||(r.categoria&&r.categoria.toLowerCase().includes(query.toLowerCase()))||(r.ubicacion&&r.ubicacion.toLowerCase().includes(query.toLowerCase())));matches.slice(0,5).forEach(r=>results.push({icon:'file-alt',text:`${r.id} - ${r.categoria||'Sin categoría'}`,action:()=>showReporteDetail(r.id)}))}const html=results.map(r=>`<div onclick="executeCommand(this)" data-action="${r.text}" class="p-4 hover:bg-slate-50 cursor-pointer flex items-center gap-3 border-b"><i class="fas fa-${r.icon} text-blue-900"></i><span class="font-bold text-sm">${r.text}</span></div>`).join('');document.getElementById('command-results').innerHTML=html;window.commandActions=results.reduce((acc,r)=>{acc[r.text]=r.action;return acc},{})}
 
 function executeCommand(el){const action=el.dataset.action;if(window.commandActions&&window.commandActions[action]){window.commandActions[action]();closeCommandPalette()}}
 

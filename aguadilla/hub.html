@@ -201,7 +201,11 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
 const MODULES = [
   {
     id: 'dashboard',
@@ -241,59 +245,70 @@ const MODULES = [
   }
 ];
 
-// Auth check
-const session = JSON.parse(localStorage.getItem('user_session') || '{}');
-if (!session.email || (!session.rol)) window.location.href = 'login.html';
+// Auth check async
+let session = {};
 
-// Set header
-const nombre = (session.nombre || '') + ' ' + (session.apellido || '');
-document.getElementById('header-name').textContent = session.nombre || 'Empleado';
-document.getElementById('header-avatar').textContent = ((session.nombre||'E')[0] + (session.apellido||'')[0]).toUpperCase();
-document.getElementById('welcome-name').textContent = session.nombre || 'Empleado';
-
-// Show admin banner
-if (session.rol === 'admin') {
-  document.getElementById('admin-banner').classList.remove('hidden');
-  document.getElementById('welcome-subtitle').textContent = 'Tienes acceso completo al sistema. Selecciona un módulo.';
-}
-
-// Determine accessible modules
-let accessibleModules;
-if (session.rol === 'admin') {
-  accessibleModules = new Set(['dashboard', 'reportes', 'mapa', 'empleados']);
-} else {
-  const perms = (session.permisos || '').split(',').map(p => p.trim()).filter(Boolean);
-  accessibleModules = new Set(perms);
-}
-
-// Render modules — only show accessible ones
-const grid = document.getElementById('modules-grid');
-const visibleModules = MODULES.filter(mod => {
-  if (session.rol === 'admin') return true;
-  if (mod.id === 'empleados') return false;
-  return accessibleModules.has(mod.id);
-});
-grid.innerHTML = visibleModules.map((mod, i) => {
-  return `
-    <a href="${mod.url}"
-       class="module-card fade-up"
-       style="--card-color:${mod.color};opacity:0">
-      <div class="flex items-center justify-between">
-        <div class="module-icon" style="background:${mod.bg}">
-          <i class="fas ${mod.icon}" style="color:${mod.color}"></i>
+function renderModules(session) {
+  let accessibleModules;
+  if (session.rol === 'admin') {
+    accessibleModules = new Set(['dashboard', 'reportes', 'mapa', 'empleados']);
+  } else {
+    const perms = (session.permisos || '').split(',').map(p => p.trim()).filter(Boolean);
+    accessibleModules = new Set(perms);
+  }
+  const grid = document.getElementById('modules-grid');
+  const visibleModules = MODULES.filter(mod => {
+    if (session.rol === 'admin') return true;
+    if (mod.id === 'empleados') return false;
+    return accessibleModules.has(mod.id);
+  });
+  grid.innerHTML = visibleModules.map((mod, i) => {
+    return `
+      <a href="${mod.url}"
+         class="module-card fade-up"
+         style="--card-color:${mod.color};opacity:0">
+        <div class="flex items-center justify-between">
+          <div class="module-icon" style="background:${mod.bg}">
+            <i class="fas ${mod.icon}" style="color:${mod.color}"></i>
+          </div>
+          <i class="fas fa-arrow-right text-slate-300 text-sm"></i>
         </div>
-        <i class="fas fa-arrow-right text-slate-300 text-sm"></i>
-      </div>
-      <div>
-        <div class="font-black text-slate-900 text-lg">${mod.title}</div>
-        <div class="text-sm text-slate-500 mt-1">${mod.desc}</div>
-      </div>
-    </a>`;
-}).join('');
+        <div>
+          <div class="font-black text-slate-900 text-lg">${mod.title}</div>
+          <div class="text-sm text-slate-500 mt-1">${mod.desc}</div>
+        </div>
+      </a>`;
+  }).join('');
+}
 
-function cerrarSesion() {
+async function inicializar() {
+  try {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: { session: authSession } } = await sb.auth.getSession();
+    if (!authSession) { window.location.href = 'login.html'; return; }
+    const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', authSession.user.id).single();
+    if (error || !perfil || !perfil.activo) { await sb.auth.signOut(); window.location.href = 'login.html'; return; }
+    session = { ...perfil, email: authSession.user.email };
+    localStorage.setItem('user_session', JSON.stringify(session));
+    // Set header
+    document.getElementById('header-name').textContent = perfil.nombre || 'Empleado';
+    document.getElementById('header-avatar').textContent = ((perfil.nombre||'E')[0] + (perfil.apellido||'')[0]).toUpperCase();
+    document.getElementById('welcome-name').textContent = perfil.nombre || 'Empleado';
+    // Show admin banner
+    if (perfil.rol === 'admin') {
+      document.getElementById('admin-banner').classList.remove('hidden');
+      document.getElementById('welcome-subtitle').textContent = 'Tienes acceso completo al sistema. Selecciona un módulo.';
+    }
+    renderModules(session);
+  } catch(e) { window.location.href = 'login.html'; }
+}
+
+async function cerrarSesion() {
+  await sb.auth.signOut();
   localStorage.removeItem('user_session');
 }
+
+inicializar();
 </script>
 </body>
 </html>

@@ -129,7 +129,7 @@
         <div class="text-white text-sm font-semibold truncate" id="sidebar-name">Admin</div>
         <div class="text-white/40 text-xs">Administrador</div>
       </div>
-      <a href="login.html" class="text-white/40 hover:text-white text-sm" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
+      <a href="#" onclick="(async()=>{await sb.auth.signOut();localStorage.removeItem('user_session');window.location.href='login.html';})()" class="text-white/40 hover:text-white text-sm" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></a>
     </div>
   </div>
 </aside>
@@ -457,12 +457,24 @@ let sb;
 const AVATAR_COLORS = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4'];
 let allEmpleados = [];
 let deleteTarget = null;
-const session = JSON.parse(localStorage.getItem('user_session') || '{}');
+let session = {};
 
-// Auth check
-if (!session.email || session.rol !== 'admin') window.location.href = 'login.html';
-document.getElementById('sidebar-name').textContent = (session.nombre || 'Admin') + ' ' + (session.apellido || '');
-document.getElementById('sidebar-avatar').textContent = ((session.nombre||'A')[0] + (session.apellido||'')[0]).toUpperCase();
+// Auth check async
+async function verificarSesion() {
+    try {
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { data: { session: authSession } } = await sb.auth.getSession();
+        if (!authSession) { window.location.href = 'login.html'; return false; }
+        const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', authSession.user.id).single();
+        if (error || !perfil || !perfil.activo) { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        if (perfil.rol !== 'admin') { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        session = { ...perfil, email: authSession.user.email };
+        localStorage.setItem('user_session', JSON.stringify(session));
+        document.getElementById('sidebar-name').textContent = (perfil.nombre || 'Admin') + ' ' + (perfil.apellido || '');
+        document.getElementById('sidebar-avatar').textContent = ((perfil.nombre||'A')[0] + (perfil.apellido||'')[0]).toUpperCase();
+        return true;
+    } catch(e) { window.location.href = 'login.html'; return false; }
+}
 
 function avatarColor(name) {
   let h = 0; for (let c of (name||'')) h += c.charCodeAt(0);
@@ -735,7 +747,10 @@ function mostrarToast(msg, isError = false) {
   setTimeout(() => t.classList.remove('show'), 3500);
 }
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    cargarEmpleados();
+    (async () => {
+        const ok = await verificarSesion();
+        if (ok) cargarEmpleados();
+    })();
   </script>
 </body>
 </html>

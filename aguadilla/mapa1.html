@@ -324,7 +324,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb;
 let cacheReportes=[],map,markersCluster,heatLayer,heatmapActive=false,currentFilter='Todos',focusMode=false,currentReporteId=null;
 
-window.onload=()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);verificarSesion();initMap();setupKeyboardShortcuts();updateRecentActivity()};
+window.onload=async ()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const ok=await verificarSesion();if(!ok)return;initMap();setupKeyboardShortcuts();updateRecentActivity()};
 
 
         // Permission check
@@ -337,9 +337,28 @@ window.onload=()=>{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KE
                 window.location.href = 'hub.html';
             }
         })();
-        function verificarSesion(){const s=JSON.parse(localStorage.getItem('user_session')||'null');if(!s||!s.email||s.rol!=='empleado'&&s.rol!=='admin'){window.location.href='index.html';return}document.getElementById('user-name').textContent=`${s.nombre} ${s.apellido}`;document.getElementById('user-email').textContent=s.email}
+        async function verificarSesion() {
+    try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', session.user.id).single();
+        if (error || !perfil || !perfil.activo) { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        if (perfil.rol !== 'empleado' && perfil.rol !== 'admin') { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        const userSession = { ...perfil, email: session.user.email };
+        localStorage.setItem('user_session', JSON.stringify(userSession));
+        document.getElementById('user-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
+        document.getElementById('user-email').textContent = session.user.email;
+        return true;
+    } catch(e) { window.location.href = 'login.html'; return false; }
+}
 
-function cerrarSesion(){if(confirm('¿Cerrar sesión?')){localStorage.removeItem('user_session');window.location.href='index.html'}}
+async function cerrarSesion() {
+    if (confirm('¿Cerrar sesión?')) {
+        await sb.auth.signOut();
+        localStorage.removeItem('user_session');
+        window.location.href = 'login.html';
+    }
+}
 
 function toggleMobileMenu(){const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('mobile-overlay');sidebar.classList.toggle('-translate-x-full');sidebar.classList.toggle('translate-x-0');overlay.classList.toggle('opacity-0');overlay.classList.toggle('pointer-events-none');overlay.classList.toggle('opacity-100');overlay.classList.toggle('pointer-events-auto')}
 
@@ -399,7 +418,8 @@ function showReporteDetail(id) {
     document.getElementById('modal-title').textContent = id;
     
     // Get foto URL - handle different field names
-    const fotoUrl = reporte.foto_url || reporte.Foto_URL || reporte['Foto_URL'] || reporte.foto || '';
+    const fotoUrls = Array.isArray(reporte.fotos) ? reporte.fotos.filter(Boolean) : [];
+    const fotoUrl = fotoUrls[0] || '';
     
     const content = `
 <div class="grid grid-cols-2 gap-4">
