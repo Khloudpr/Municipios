@@ -269,7 +269,8 @@
       <a href="aguadilla-reporta-completo.html" class="text-sm text-blue-600 font-semibold hover:underline">
         <i class="fas fa-plus mr-1"></i> Nuevo reporte
       </a>
-      <button onclick="buscarReporte()" class="text-sm text-slate-400 hover:text-slate-600 font-semibold">
+      <!-- FIX: location.reload() fuerza recarga limpia sin caché -->
+      <button onclick="location.reload()" class="text-sm text-slate-400 hover:text-slate-600 font-semibold">
         <i class="fas fa-sync-alt mr-1"></i> Actualizar
       </button>
     </div>
@@ -301,10 +302,8 @@ function formatCode(input) {
   const selStart = input.selectionStart;
   const prevLen  = input.value.length;
 
-  // Solo letras y números
   let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
-  // Formato XX-XXXX-XXXX
   let out = '';
   if (raw.length > 0) out  = raw.substring(0, Math.min(2, raw.length));
   if (raw.length > 2) out += '-' + raw.substring(2, Math.min(6, raw.length));
@@ -312,7 +311,6 @@ function formatCode(input) {
 
   input.value = out;
 
-  // Mantener cursor en posición correcta
   const diff   = out.length - prevLen;
   const newPos = Math.max(0, selStart + diff);
   try { input.setSelectionRange(newPos, newPos); } catch(e) {}
@@ -365,7 +363,7 @@ async function buscarReporte() {
   }
 }
 
-// ── Mapeos de estatus (BD snake_case + legacy) ───────────────────
+// ── Mapeos de estatus ────────────────────────────────────────────
 const LABEL_MAP = {
   'nuevo':       'Nuevo',
   'pendiente':   'Pendiente',
@@ -426,25 +424,21 @@ const TL_ICONS = {
 function mostrarResultado(r) {
   const card = document.getElementById('result-card');
 
-  // Info básica
   document.getElementById('res-codigo').textContent      = r.id           || '—';
   document.getElementById('res-categoria').textContent   = r.categoria    || '—';
   document.getElementById('res-ubicacion').textContent   = r.ubicacion    || '—';
   document.getElementById('res-depto').textContent       = r.departamento || '—';
   document.getElementById('res-descripcion').textContent = r.descripcion  || '—';
 
-  // Normalizar estatus a minúsculas para los mapeos
   const estatusRaw   = (r.estatus || 'nuevo').toLowerCase().trim();
   const estatusLabel = LABEL_MAP[estatusRaw] || r.estatus || 'Nuevo';
 
   document.getElementById('res-estatus').textContent = estatusLabel;
 
-  // Prioridad
   const pIcons = { Alta: '🔴', Media: '🟡', Baja: '🟢' };
   document.getElementById('res-prioridad').textContent =
     (pIcons[r.prioridad] || '') + ' ' + (r.prioridad || '—');
 
-  // Fecha
   if (r.fecha_creacion) {
     const d = new Date(r.fecha_creacion);
     document.getElementById('res-fecha').textContent = d.toLocaleDateString('es-PR', {
@@ -452,21 +446,18 @@ function mostrarResultado(r) {
     });
   }
 
-  // Badge
   const badge = document.getElementById('res-badge');
   badge.className = 'badge ' + (BADGE_MAP[estatusRaw] || 'badge-nuevo');
   badge.innerHTML = `<i class="fas ${TL_ICONS[estatusRaw] || 'fa-circle'} text-xs"></i>
                      <span>${estatusLabel}</span>`;
 
-  // Progress
   const prog = document.getElementById('res-progress');
   prog.style.width = PROGRESS_MAP[estatusRaw] || '10%';
   prog.className   = 'progress-fill ' + (COLOR_MAP[estatusRaw] || 'bg-blue-600');
 
-  // Timeline
   const currentIdx = TIMELINE_STEPS.findIndex(s =>
     s.value === estatusRaw ||
-    s.value.replace('_progreso','_revision') === estatusRaw
+    s.value.replace('_progreso', '_revision') === estatusRaw
   );
 
   document.getElementById('res-timeline').innerHTML = TIMELINE_STEPS.map((step, i) => {
@@ -489,7 +480,6 @@ function mostrarResultado(r) {
       </div>`;
   }).join('');
 
-  // Mostrar con animación
   card.classList.remove('hidden');
   card.classList.add('fade-up');
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
