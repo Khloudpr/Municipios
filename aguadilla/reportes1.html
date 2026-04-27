@@ -91,8 +91,8 @@
 <!-- Lightbox -->
 <div id="photo-lightbox" class="lightbox" onclick="closeLightbox(event)">
     <button class="lightbox-close" onclick="closeLightbox(event)">×</button>
-    <button id="lightbox-prev" onclick="lightboxNav(-1)" style="display:none;position:absolute;left:20px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%)'">‹</button>
-    <button id="lightbox-next" onclick="lightboxNav(1)" style="display:none;position:absolute;right:80px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s" onmouseover="this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.transform='translateY(-50%)'">›</button>
+    <button id="lightbox-prev" onclick="lightboxNav(-1)" style="display:none;position:absolute;left:20px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s">‹</button>
+    <button id="lightbox-next" onclick="lightboxNav(1)" style="display:none;position:absolute;right:80px;top:50%;transform:translateY(-50%);width:50px;height:50px;background:white;border-radius:50%;border:none;font-size:20px;cursor:pointer;z-index:1000;transition:all 0.3s">›</button>
     <img id="lightbox-img" src="" alt="Evidencia" class="lightbox-image">
     <div id="lightbox-info" class="lightbox-info"></div>
 </div>
@@ -306,11 +306,16 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let sb;
 let allReportes = [], filteredReportes = [], currentFilter = 'Todos', focusMode = false, userSession = null;
 
-// ─── INIT ──────────────────────────────────────────────────
+// ── Convierte ID a clave segura para atributos HTML
+// AG-2026-0037 → AG_2026_0037  (sin guiones, no empieza con número)
+function toKey(id) {
+    return String(id).replace(/-/g, '_');
+}
+
 window.onload = async function() {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const ok = await verificarSesion();
-    if (!ok) return; // redirigido a login
+    if (!ok) return;
     await cargarReportes();
     setupFilters();
     setupKeyboardShortcuts();
@@ -318,57 +323,21 @@ window.onload = async function() {
     checkURLParams();
 };
 
-// ─── SESIÓN REAL DE SUPABASE ───────────────────────────────
 async function verificarSesion() {
     try {
         const { data: { session } } = await sb.auth.getSession();
-
-        if (!session) {
-            window.location.href = 'login.html';
-            return false;
-        }
-
-        // Obtener perfil del empleado desde la tabla perfiles
-        const { data: perfil, error } = await sb
-            .from('perfiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-
-        if (error || !perfil) {
-            await sb.auth.signOut();
-            window.location.href = 'login.html';
-            return false;
-        }
-
-        if (!perfil.activo) {
-            await sb.auth.signOut();
-            window.location.href = 'login.html';
-            return false;
-        }
-
-        if (perfil.rol !== 'empleado' && perfil.rol !== 'admin') {
-            await sb.auth.signOut();
-            window.location.href = 'login.html';
-            return false;
-        }
-
-        // Guardar sesión en memoria y localStorage (compatibilidad)
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const { data: perfil, error } = await sb.from('perfiles').select('*').eq('id', session.user.id).single();
+        if (error || !perfil || !perfil.activo) { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
+        if (perfil.rol !== 'empleado' && perfil.rol !== 'admin') { await sb.auth.signOut(); window.location.href = 'login.html'; return false; }
         userSession = { ...perfil, email: session.user.email };
         localStorage.setItem('user_session', JSON.stringify(userSession));
-
         document.getElementById('user-name').textContent = `${perfil.nombre} ${perfil.apellido}`;
         document.getElementById('user-email').textContent = session.user.email;
-
         return true;
-    } catch (e) {
-        console.error('Error verificando sesión:', e);
-        window.location.href = 'login.html';
-        return false;
-    }
+    } catch (e) { window.location.href = 'login.html'; return false; }
 }
 
-// ─── CERRAR SESIÓN ─────────────────────────────────────────
 async function cerrarSesion() {
     if (confirm('¿Cerrar sesión?')) {
         await sb.auth.signOut();
@@ -377,7 +346,6 @@ async function cerrarSesion() {
     }
 }
 
-// ─── MOBILE MENU ───────────────────────────────────────────
 function toggleMobileMenu() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('mobile-overlay');
@@ -389,7 +357,6 @@ function toggleMobileMenu() {
     overlay.classList.toggle('pointer-events-auto');
 }
 
-// ─── KEYBOARD SHORTCUTS ────────────────────────────────────
 function setupKeyboardShortcuts() {
     document.addEventListener('keydown', e => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
@@ -409,18 +376,15 @@ function setupKeyboardShortcuts() {
 function showShortcuts() { document.getElementById('shortcuts-help').classList.add('active'); }
 function closeShortcuts() { document.getElementById('shortcuts-help').classList.remove('active'); }
 
-// ─── COMMAND PALETTE ───────────────────────────────────────
 function openCommandPalette() {
     document.getElementById('command-palette').classList.add('active');
     document.getElementById('command-input').focus();
     updateCommandResults('');
 }
-
 function closeCommandPalette() {
     document.getElementById('command-palette').classList.remove('active');
     document.getElementById('command-input').value = '';
 }
-
 document.getElementById('command-input')?.addEventListener('input', e => updateCommandResults(e.target.value));
 
 function updateCommandResults(query) {
@@ -445,23 +409,21 @@ function updateCommandResults(query) {
 </div>`).join('') || '<div class="p-4 text-center text-slate-400">No se encontraron resultados</div>';
 }
 
-// ─── FOCUS MODE ────────────────────────────────────────────
 function toggleFocusMode() {
     focusMode = !focusMode;
     document.body.classList.toggle('focus-mode');
     const btn = document.getElementById('btn-focus');
     if (focusMode) {
-        btn.classList.replace('bg-white', 'bg-blue-900');
-        btn.classList.replace('text-slate-700', 'text-white');
+        btn.classList.replace('bg-white','bg-blue-900');
+        btn.classList.replace('text-slate-700','text-white');
         btn.innerHTML = '<i class="fas fa-eye-slash mr-2"></i><span class="hidden sm:inline">Exit Focus</span>';
     } else {
-        btn.classList.replace('bg-blue-900', 'bg-white');
-        btn.classList.replace('text-white', 'text-slate-700');
+        btn.classList.replace('bg-blue-900','bg-white');
+        btn.classList.replace('text-white','text-slate-700');
         btn.innerHTML = '<i class="fas fa-eye mr-2"></i><span class="hidden sm:inline">Focus</span>';
     }
 }
 
-// ─── RECENT ACTIVITY ───────────────────────────────────────
 function updateRecentActivity() {
     const activity = (localStorage.getItem('recent_activity') || '').split(',').filter(Boolean).slice(0, 3);
     const html = activity.map(id => `<div class="text-blue-300 hover:text-white cursor-pointer" onclick="showReporteDetail('${id}')"><i class="fas fa-file-alt mr-2 text-[10px]"></i>${id}</div>`).join('');
@@ -481,7 +443,6 @@ function checkURLParams() {
     if (id) setTimeout(() => showReporteDetail(id), 500);
 }
 
-// ─── FILTERS ───────────────────────────────────────────────
 function setupFilters() {
     document.querySelectorAll('.filter-btn').forEach(btn => btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -491,16 +452,11 @@ function setupFilters() {
     }));
 }
 
-// ─── CARGAR REPORTES ───────────────────────────────────────
 async function cargarReportes() {
     const syncIcon = document.getElementById('sync-icon');
     syncIcon.classList.add('fa-spin');
     try {
-        const { data, error } = await sb
-            .from('reportes')
-            .select('*')
-            .order('fecha_creacion', { ascending: false });
-
+        const { data, error } = await sb.from('reportes').select('*').order('fecha_creacion', { ascending: false });
         if (error) throw error;
         allReportes = data || [];
         aplicarFiltro();
@@ -513,7 +469,6 @@ async function cargarReportes() {
     }
 }
 
-// ─── SLA ───────────────────────────────────────────────────
 function getSLABadge(prioridad, fecha, estatus) {
     if (estatus === 'resuelto' || !fecha) return '';
     const SLA = { 'Alta': 2, 'Media': 5, 'Baja': 10 };
@@ -524,11 +479,8 @@ function getSLABadge(prioridad, fecha, estatus) {
     return `<span class="sla-ok"><i class="fas fa-check-circle"></i> ${limit - dias}d restantes</span>`;
 }
 
-// ─── FILTRO Y STATS ────────────────────────────────────────
 function aplicarFiltro() {
-    filteredReportes = currentFilter === 'Todos'
-        ? allReportes
-        : allReportes.filter(r => r.estatus === currentFilter);
+    filteredReportes = currentFilter === 'Todos' ? allReportes : allReportes.filter(r => r.estatus === currentFilter);
     updateStats();
     renderTabla();
 }
@@ -540,12 +492,12 @@ function updateStats() {
     document.getElementById('stat-completados').textContent = allReportes.filter(r => r.estatus === 'resuelto').length;
 }
 
-// ─── RENDER TABLA ──────────────────────────────────────────
 function renderTabla() {
     const html = filteredReportes.map(r => {
-        const idLimpio = String(r.id).replace('DM-', '').replace('AG-', '');
+        // ── FIX: usar guiones → guiones bajos para IDs HTML válidos ──
+        const key = toKey(r.id);
         return `
-<tr class="border-b hover:bg-slate-50 transition" id="row-${idLimpio}">
+<tr class="border-b hover:bg-slate-50 transition" id="row-${key}">
     <td class="p-4">
         <div class="flex flex-col gap-1">
             <span class="text-blue-900 font-black italic uppercase text-xs cursor-pointer hover:underline" onclick="showReporteDetail('${r.id}')">${r.id}</span>
@@ -557,80 +509,71 @@ function renderTabla() {
     <td class="p-4 text-xs text-slate-500">${r.ubicacion || 'Sin ubicación'}</td>
     <td class="p-4 text-center">
         ${Array.isArray(r.fotos) && r.fotos.filter(Boolean).length > 0
-            ? `<button onclick="abrirFotosDirecto(event, '${r.id}')" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 px-3 py-1.5 rounded-xl transition text-xs font-black" title="Ver fotos">
-                <i class="fas fa-camera"></i>
-                <span>${r.fotos.filter(Boolean).length}</span>
+            ? `<button onclick="abrirFotosDirecto(event,'${r.id}')" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 px-3 py-1.5 rounded-xl transition text-xs font-black">
+                <i class="fas fa-camera"></i><span>${r.fotos.filter(Boolean).length}</span>
                </button>`
             : ''}
     </td>
     <td class="p-4 text-center">
-        <select id="sel-${idLimpio}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getEstatusColor(r.estatus)}" onchange="markChanged('${idLimpio}')">
-            <option value="nuevo" ${r.estatus === 'nuevo' ? 'selected' : ''}>Nuevo</option>
-            <option value="pendiente" ${r.estatus === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-            <option value="en_progreso" ${r.estatus === 'en_progreso' ? 'selected' : ''}>En Revisión</option>
-            <option value="resuelto" ${r.estatus === 'resuelto' ? 'selected' : ''}>Completado</option>
+        <select id="sel-${key}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getEstatusColor(r.estatus)}" onchange="markChanged('${key}')">
+            <option value="nuevo"       ${r.estatus==='nuevo'       ?'selected':''}>Nuevo</option>
+            <option value="pendiente"   ${r.estatus==='pendiente'   ?'selected':''}>Pendiente</option>
+            <option value="en_progreso" ${r.estatus==='en_progreso' ?'selected':''}>En Revisión</option>
+            <option value="resuelto"    ${r.estatus==='resuelto'    ?'selected':''}>Completado</option>
         </select>
     </td>
     <td class="p-4 text-center">
-        <select id="prio-${idLimpio}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getPrioridadColor(r.prioridad || 'Media')}" onchange="markChanged('${idLimpio}')">
-            <option value="Baja" ${r.prioridad === 'Baja' ? 'selected' : ''}>Baja</option>
-            <option value="Media" ${(!r.prioridad || r.prioridad === 'Media') ? 'selected' : ''}>Media</option>
-            <option value="Alta" ${r.prioridad === 'Alta' ? 'selected' : ''}>Alta</option>
+        <select id="prio-${key}" class="px-3 py-1 rounded-full text-[10px] font-black uppercase border-2 ${getPrioridadColor(r.prioridad||'Media')}" onchange="markChanged('${key}')">
+            <option value="Baja"  ${r.prioridad==='Baja' ?'selected':''}>Baja</option>
+            <option value="Media" ${(!r.prioridad||r.prioridad==='Media')?'selected':''}>Media</option>
+            <option value="Alta"  ${r.prioridad==='Alta' ?'selected':''}>Alta</option>
         </select>
     </td>
     <td class="p-4 text-center">
-        <button id="btn-${idLimpio}" onclick="actualizar('${r.id}')" class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition">SAVE</button>
+        <button id="btn-${key}" onclick="actualizar('${r.id}')" class="bg-blue-900 text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-800 transition">SAVE</button>
     </td>
 </tr>`;
     }).join('');
-    document.getElementById('tabla-reportes').innerHTML = html || '<tr><td colspan="7" class="p-8 text-center text-slate-400 font-bold">No hay reportes</td></tr>';
+    document.getElementById('tabla-reportes').innerHTML = html || '<tr><td colspan="8" class="p-8 text-center text-slate-400 font-bold">No hay reportes</td></tr>';
 }
 
 function getEstatusColor(estatus) {
-    const colors = {
-        'nuevo': 'bg-red-50 text-red-600 border-red-200',
-        'pendiente': 'bg-orange-50 text-orange-600 border-orange-200',
-        'en_progreso': 'bg-blue-50 text-blue-600 border-blue-200',
-        'resuelto': 'bg-green-50 text-green-600 border-green-200'
-    };
+    const colors = { 'nuevo':'bg-red-50 text-red-600 border-red-200', 'pendiente':'bg-orange-50 text-orange-600 border-orange-200', 'en_progreso':'bg-blue-50 text-blue-600 border-blue-200', 'resuelto':'bg-green-50 text-green-600 border-green-200' };
     return colors[estatus] || 'bg-slate-50 text-slate-600 border-slate-200';
 }
 
 function getPrioridadColor(prioridad) {
-    const colors = {
-        'Baja': 'bg-slate-50 text-slate-600 border-slate-200',
-        'Media': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-        'Alta': 'bg-red-50 text-red-600 border-red-200'
-    };
+    const colors = { 'Baja':'bg-slate-50 text-slate-600 border-slate-200', 'Media':'bg-yellow-50 text-yellow-700 border-yellow-200', 'Alta':'bg-red-50 text-red-600 border-red-200' };
     return colors[prioridad] || colors['Media'];
 }
 
-function markChanged(id) {
-    const btn = document.getElementById(`btn-${id}`);
+function markChanged(key) {
+    const btn = document.getElementById(`btn-${key}`);
     if (!btn) return;
     btn.classList.remove('bg-blue-900');
     btn.classList.add('bg-green-600', 'animate-pulse');
     btn.innerHTML = '<i class="fas fa-save mr-1"></i>GUARDAR';
 }
 
-// ─── ACTUALIZAR REPORTE ────────────────────────────────────
-// Solo actualiza estatus y prioridad (campos permitidos para empleados)
+// ── ACTUALIZAR REPORTE ─────────────────────────────────────
 async function actualizar(id) {
-    const idLimpio = String(id).replace('DM-', '').replace('AG-', '');
-    const btn = document.getElementById(`btn-${idLimpio}`);
-    const estatusEl = document.getElementById(`sel-${idLimpio}`);
-    const prioridadEl = document.getElementById(`prio-${idLimpio}`);
+    const key        = toKey(id);
+    const btn        = document.getElementById(`btn-${key}`);
+    const estatusEl  = document.getElementById(`sel-${key}`);
+    const prioridadEl= document.getElementById(`prio-${key}`);
 
-    if (!estatusEl || !prioridadEl) { alert('Error: elementos no encontrados'); return; }
+    if (!estatusEl || !prioridadEl) {
+        alert('Error: no se encontraron los elementos del formulario');
+        return;
+    }
 
-    const estatus = estatusEl.value;
+    const estatus   = estatusEl.value;
     const prioridad = prioridadEl.value;
 
     btn.innerHTML = '<i class="fas fa-sync fa-spin"></i>';
-    btn.disabled = true;
+    btn.disabled  = true;
 
     try {
-        // Solo se envían los campos permitidos: estatus y prioridad
         const { error } = await sb
             .from('reportes')
             .update({ estatus, prioridad })
@@ -638,8 +581,9 @@ async function actualizar(id) {
 
         if (error) throw error;
 
+        // Éxito visual
         btn.innerHTML = '<i class="fas fa-check"></i>';
-        btn.classList.remove('bg-blue-900', 'bg-green-600', 'animate-pulse');
+        btn.classList.remove('bg-blue-900','bg-green-600','animate-pulse');
         btn.classList.add('bg-green-700');
 
         setTimeout(() => {
@@ -649,7 +593,8 @@ async function actualizar(id) {
             btn.disabled = false;
         }, 2000);
 
-        const row = document.getElementById(`row-${idLimpio}`);
+        // Highlight fila
+        const row = document.getElementById(`row-${key}`);
         if (row) row.classList.add('row-highlight');
 
         // Actualizar en memoria
@@ -657,14 +602,15 @@ async function actualizar(id) {
         if (idx !== -1) { allReportes[idx].estatus = estatus; allReportes[idx].prioridad = prioridad; }
 
     } catch (e) {
-        console.error(e);
-        alert('Error al actualizar: ' + e.message);
+        console.error('Error actualizando:', e);
+        alert('Error al guardar: ' + e.message);
         btn.innerHTML = 'SAVE';
-        btn.disabled = false;
+        btn.disabled  = false;
+        btn.classList.remove('bg-green-700');
+        btn.classList.add('bg-blue-900');
     }
 }
 
-// ─── ABRIR FOTOS DIRECTO DESDE TABLA ──────────────────────
 function abrirFotosDirecto(event, id) {
     event.stopPropagation();
     const reporte = allReportes.find(r => r.id === id);
@@ -672,56 +618,42 @@ function abrirFotosDirecto(event, id) {
     openLightbox(reporte.fotos.filter(Boolean)[0], reporte.id, reporte.fecha_creacion);
 }
 
-// ─── DETALLE MODAL ─────────────────────────────────────────
 function showReporteDetail(id) {
     addToRecentActivity(id);
     const reporte = allReportes.find(r => r.id === id);
     if (!reporte) { alert('Reporte no encontrado'); return; }
-
     document.getElementById('modal-title').textContent = id;
-
-    // fotos es un array de URLs en Supabase
     const fotoUrls = Array.isArray(reporte.fotos) ? reporte.fotos.filter(Boolean) : [];
-
     const content = `
 <div class="grid grid-cols-2 gap-4">
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Ciudadano</p><p class="text-sm font-bold">${reporte.nombre || 'Sin nombre'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Email</p><p class="text-sm">${reporte.email || 'Sin email'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoria || 'Sin categoría'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad ? reporte.prioridad.charAt(0).toUpperCase() + reporte.prioridad.slice(1) : 'Media'}</p></div>
-    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus ? reporte.estatus.charAt(0).toUpperCase() + reporte.estatus.slice(1).replace('_', ' ') : '—'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Ciudadano</p><p class="text-sm font-bold">${reporte.nombre||'Sin nombre'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Email</p><p class="text-sm">${reporte.email||'Sin email'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Categoría</p><p class="text-sm font-bold">${reporte.categoria||'Sin categoría'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Prioridad</p><p class="text-sm font-bold">${reporte.prioridad||'Media'}</p></div>
+    <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Estatus</p><p class="text-sm font-bold">${reporte.estatus||'—'}</p></div>
     <div><p class="text-xs font-black text-slate-400 uppercase mb-1">Fecha</p><p class="text-sm">${new Date(reporte.fecha_creacion).toLocaleDateString('es-PR')}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">SLA</p><p class="text-sm">${getSLABadge(reporte.prioridad, reporte.fecha_creacion, reporte.estatus) || '<span class="text-green-600 font-semibold">✓ Completado</span>'}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicacion || 'Sin ubicación'}</p></div>
-    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripcion || 'Sin descripción'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">SLA</p><p class="text-sm">${getSLABadge(reporte.prioridad,reporte.fecha_creacion,reporte.estatus)||'<span class="text-green-600 font-semibold">✓ Completado</span>'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Ubicación</p><p class="text-sm font-bold">${reporte.ubicacion||'Sin ubicación'}</p></div>
+    <div class="col-span-2"><p class="text-xs font-black text-slate-400 uppercase mb-1">Descripción</p><p class="text-sm">${reporte.descripcion||'Sin descripción'}</p></div>
     ${fotoUrls.length > 0 ? `
     <div class="col-span-2">
-        <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica <span class="text-slate-300 font-normal">(${fotoUrls.length} foto${fotoUrls.length > 1 ? 's' : ''})</span></p>
+        <p class="text-xs font-black text-slate-400 uppercase mb-3">Evidencia Fotográfica <span class="text-slate-300 font-normal">(${fotoUrls.length} foto${fotoUrls.length>1?'s':''})</span></p>
         <div class="bg-slate-50 rounded-xl p-4 border-2 border-slate-200">
             <div class="flex gap-3 flex-wrap mb-3">
-                ${fotoUrls.map((url, idx) => `
-                <img src="${url}" alt="Foto ${idx+1}"
-                    class="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-blue-500 transition"
-                    onclick="openLightbox('${url}', '${reporte.id}', '${reporte.fecha_creacion}')"
-                    onerror="this.onerror=null;this.style.display='none'">
-                `).join('')}
+                ${fotoUrls.map((url,idx)=>`<img src="${url}" alt="Foto ${idx+1}" class="w-24 h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-blue-500 transition" onclick="openLightbox('${url}','${reporte.id}','${reporte.fecha_creacion}')" onerror="this.style.display='none'">`).join('')}
             </div>
-            <button onclick="openLightbox('${fotoUrls[0]}', '${reporte.id}', '${reporte.fecha_creacion}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
-                <i class="fas fa-search-plus"></i>
-                Ver Foto${fotoUrls.length > 1 ? 's' : ''} Completa${fotoUrls.length > 1 ? 's' : ''}
+            <button onclick="openLightbox('${fotoUrls[0]}','${reporte.id}','${reporte.fecha_creacion}')" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black text-sm hover:from-blue-700 hover:to-purple-700 transition flex items-center justify-center gap-2">
+                <i class="fas fa-search-plus"></i> Ver Foto${fotoUrls.length>1?'s':''} Completa${fotoUrls.length>1?'s':''}
             </button>
         </div>
     </div>` : ''}
-    ${reporte.lat && reporte.lng ? `
+    ${reporte.lat&&reporte.lng?`
     <div class="col-span-2">
         <p class="text-xs font-black text-slate-400 uppercase mb-1">Coordenadas GPS</p>
         <p class="text-sm font-mono">${reporte.lat}, ${reporte.lng}</p>
-        <button onclick="window.open('https://www.google.com/maps?q=${reporte.lat},${reporte.lng}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline">
-            <i class="fas fa-map-marker-alt mr-1"></i>Ver en Google Maps
-        </button>
-    </div>` : ''}
+        <button onclick="window.open('https://www.google.com/maps?q=${reporte.lat},${reporte.lng}','_blank')" class="mt-2 text-xs text-blue-900 font-bold hover:underline"><i class="fas fa-map-marker-alt mr-1"></i>Ver en Google Maps</button>
+    </div>`:''}
 </div>`;
-
     document.getElementById('modal-content').innerHTML = content + `
 <div class="mt-8 pt-6 border-t-2 border-slate-100">
     <div class="flex items-center gap-2 mb-4">
@@ -731,37 +663,28 @@ function showReporteDetail(id) {
     </div>
     <div id="comments-list-${id}" class="space-y-2 mb-4 max-h-64 overflow-y-auto pr-1">
         <div class="text-center py-6 text-slate-400 text-sm" id="comments-empty-${id}">
-            <i class="fas fa-comment-slash text-2xl mb-2 block opacity-30"></i>
-            Sin notas todavía
+            <i class="fas fa-comment-slash text-2xl mb-2 block opacity-30"></i>Sin notas todavía
         </div>
     </div>
     <div class="flex gap-2">
-        <textarea id="comment-input-${id}" class="comment-input" rows="2" placeholder="Escribe una nota interna... (solo visible para el equipo)"></textarea>
-        <button class="comment-send" onclick="enviarComentario('${id}')" id="comment-btn-${id}">
-            <i class="fas fa-paper-plane"></i>
-        </button>
+        <textarea id="comment-input-${id}" class="comment-input" rows="2" placeholder="Escribe una nota interna..."></textarea>
+        <button class="comment-send" onclick="enviarComentario('${id}')" id="comment-btn-${id}"><i class="fas fa-paper-plane"></i></button>
     </div>
-    <p class="text-xs text-slate-400 mt-2"><i class="fas fa-lock mr-1"></i>Solo visible para empleados — el ciudadano no ve estas notas</p>
+    <p class="text-xs text-slate-400 mt-2"><i class="fas fa-lock mr-1"></i>Solo visible para empleados</p>
 </div>`;
-
     document.getElementById('modal-actions').innerHTML = '<button onclick="closeModal()" class="flex-1 bg-slate-100 text-slate-600 py-3 rounded-xl font-black uppercase text-sm hover:bg-slate-200 transition">Cerrar</button>';
     document.getElementById('detail-modal').classList.add('active');
     setTimeout(() => cargarComentarios(id), 100);
 }
 
-function closeModal() {
-    document.getElementById('detail-modal').classList.remove('active');
-}
+function closeModal() { document.getElementById('detail-modal').classList.remove('active'); }
 
-// ─── EXPORTAR ──────────────────────────────────────────────
 function exportarReportes() {
     let csv = 'ID,Ciudadano,Categoria,Ubicacion,Estatus,Prioridad,Fecha\n';
-    filteredReportes.forEach(r => {
-        csv += `${r.id},"${r.nombre || ''}","${r.categoria || ''}","${r.ubicacion || ''}",${r.estatus},${r.prioridad || 'Media'},${r.fecha_creacion}\n`;
-    });
+    filteredReportes.forEach(r => { csv += `${r.id},"${r.nombre||''}","${r.categoria||''}","${r.ubicacion||''}",${r.estatus},${r.prioridad||'Media'},${r.fecha_creacion}\n`; });
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const url  = window.URL.createObjectURL(blob);
+    const a    = document.createElement('a');
     a.href = url;
     const nombre = window.MUNICIPIO_CONFIG ? window.MUNICIPIO_CONFIG.nombre.toLowerCase() : 'municipio';
     a.download = `${nombre}-reportes-${new Date().toISOString().split('T')[0]}.csv`;
@@ -769,167 +692,99 @@ function exportarReportes() {
     window.URL.revokeObjectURL(url);
 }
 
-// ─── LIGHTBOX ──────────────────────────────────────────────
-// Lightbox con navegación múltiple
-let lightboxFotos = [];
-let lightboxIndex = 0;
-let lightboxReporteId = '';
-let lightboxFecha = '';
+let lightboxFotos=[], lightboxIndex=0, lightboxReporteId='', lightboxFecha='';
 
 function openLightbox(url, id, fecha) {
-    // Buscar el reporte para obtener todas las fotos
     const reporte = allReportes.find(r => r.id === id);
     lightboxFotos = reporte && Array.isArray(reporte.fotos) ? reporte.fotos.filter(Boolean) : [url];
-    lightboxIndex = lightboxFotos.indexOf(url);
-    if (lightboxIndex === -1) lightboxIndex = 0;
-    lightboxReporteId = id;
-    lightboxFecha = fecha;
+    lightboxIndex = lightboxFotos.indexOf(url); if (lightboxIndex===-1) lightboxIndex=0;
+    lightboxReporteId=id; lightboxFecha=fecha;
     renderLightbox();
     document.getElementById('photo-lightbox').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow='hidden';
 }
 
 function renderLightbox() {
     document.getElementById('lightbox-img').src = lightboxFotos[lightboxIndex];
     const total = lightboxFotos.length;
-    document.getElementById('lightbox-info').innerHTML = `
-        <span><i class="fas fa-hashtag mr-1"></i>${lightboxReporteId}</span>
-        <span><i class="fas fa-calendar mr-1"></i>${new Date(lightboxFecha).toLocaleDateString('es-PR')}</span>
-        ${total > 1 ? `<span><i class="fas fa-images mr-1"></i>${lightboxIndex + 1} / ${total}</span>` : ''}
-    `;
-    const prev = document.getElementById('lightbox-prev');
-    const next = document.getElementById('lightbox-next');
-    if (total > 1) {
-        prev.style.display = lightboxIndex > 0 ? 'flex' : 'none';
-        next.style.display = lightboxIndex < total - 1 ? 'flex' : 'none';
-    } else {
-        prev.style.display = 'none';
-        next.style.display = 'none';
-    }
+    document.getElementById('lightbox-info').innerHTML=`<span><i class="fas fa-hashtag mr-1"></i>${lightboxReporteId}</span><span><i class="fas fa-calendar mr-1"></i>${new Date(lightboxFecha).toLocaleDateString('es-PR')}</span>${total>1?`<span><i class="fas fa-images mr-1"></i>${lightboxIndex+1} / ${total}</span>`:''}`;
+    const prev=document.getElementById('lightbox-prev'), next=document.getElementById('lightbox-next');
+    if(total>1){prev.style.display=lightboxIndex>0?'flex':'none';next.style.display=lightboxIndex<total-1?'flex':'none';}
+    else{prev.style.display='none';next.style.display='none';}
 }
 
-function lightboxNav(dir) {
-    lightboxIndex = Math.max(0, Math.min(lightboxFotos.length - 1, lightboxIndex + dir));
-    renderLightbox();
-}
+function lightboxNav(dir) { lightboxIndex=Math.max(0,Math.min(lightboxFotos.length-1,lightboxIndex+dir)); renderLightbox(); }
 
 function closeLightbox(event) {
-    if (event.target.id === 'photo-lightbox' || event.target.classList.contains('lightbox-close')) {
+    if(event.target.id==='photo-lightbox'||event.target.classList.contains('lightbox-close')){
         document.getElementById('photo-lightbox').classList.remove('active');
-        document.body.style.overflow = 'auto';
-        lightboxFotos = [];
+        document.body.style.overflow='auto'; lightboxFotos=[];
     }
 }
 
-// ─── COMENTARIOS ───────────────────────────────────────────
-const AVATAR_COLORS_C = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
-function avatarColorC(name) {
-    let h = 0;
-    for (let c of (name || '')) h += c.charCodeAt(0);
-    return AVATAR_COLORS_C[h % AVATAR_COLORS_C.length];
-}
+const AVATAR_COLORS_C=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#ec4899'];
+function avatarColorC(name){let h=0;for(let c of(name||''))h+=c.charCodeAt(0);return AVATAR_COLORS_C[h%AVATAR_COLORS_C.length];}
 
 async function cargarComentarios(idReporte) {
     try {
-        const { data, error } = await sb
-            .from('comentarios')
-            .select('*')
-            .eq('id_reporte', idReporte)
-            .order('fecha', { ascending: true });
-
+        const { data, error } = await sb.from('comentarios').select('*').eq('id_reporte', idReporte).order('fecha', { ascending: true });
         if (error) throw error;
         renderComentarios(idReporte, data || []);
-    } catch (e) {
-        console.error('Error loading comments:', e);
-    }
+    } catch (e) { console.error('Error loading comments:', e); }
 }
 
 function renderComentarios(idReporte, comentarios) {
-    const list = document.getElementById('comments-list-' + idReporte);
-    const empty = document.getElementById('comments-empty-' + idReporte);
-    const count = document.getElementById('comment-count-' + idReporte);
-    if (!list) return;
-
-    if (count) count.textContent = comentarios.length;
-
-    if (!comentarios.length) {
-        if (empty) empty.style.display = 'block';
-        return;
-    }
-    if (empty) empty.style.display = 'none';
-
-    list.innerHTML = comentarios.map(c => {
-        const isMine = c.autor_email === userSession?.email;
-        const initials = (c.autor || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-        const color = avatarColorC(c.autor);
-        const fecha = c.fecha ? new Date(c.fecha).toLocaleString('es-PR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-        return `<div class="comment-bubble ${isMine ? 'mine' : ''} flex gap-3">
+    const list=document.getElementById('comments-list-'+idReporte);
+    const empty=document.getElementById('comments-empty-'+idReporte);
+    const count=document.getElementById('comment-count-'+idReporte);
+    if(!list) return;
+    if(count) count.textContent=comentarios.length;
+    if(!comentarios.length){if(empty)empty.style.display='block';return;}
+    if(empty) empty.style.display='none';
+    list.innerHTML=comentarios.map(c=>{
+        const isMine=c.autor_email===userSession?.email;
+        const initials=(c.autor||'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+        const color=avatarColorC(c.autor);
+        const fecha=c.fecha?new Date(c.fecha).toLocaleString('es-PR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        return `<div class="comment-bubble ${isMine?'mine':''} flex gap-3">
             <div class="comment-avatar text-white" style="background:${color}">${initials}</div>
             <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-bold text-slate-700">${c.autor || 'Empleado'}</span>
+                    <span class="text-xs font-bold text-slate-700">${c.autor||'Empleado'}</span>
                     <span class="text-xs text-slate-400">${fecha}</span>
-                    ${isMine ? '<span class="text-xs text-blue-500 font-bold">Tú</span>' : ''}
+                    ${isMine?'<span class="text-xs text-blue-500 font-bold">Tú</span>':''}
                 </div>
                 <p class="text-sm text-slate-700 leading-relaxed">${c.texto}</p>
             </div>
         </div>`;
     }).join('');
-
-    list.scrollTop = list.scrollHeight;
+    list.scrollTop=list.scrollHeight;
 }
 
 async function enviarComentario(idReporte) {
-    const input = document.getElementById('comment-input-' + idReporte);
-    const btn = document.getElementById('comment-btn-' + idReporte);
-    const texto = input ? input.value.trim() : '';
-    if (!texto) return;
-    if (!userSession?.email) { alert('Debes iniciar sesión'); return; }
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
+    const input=document.getElementById('comment-input-'+idReporte);
+    const btn=document.getElementById('comment-btn-'+idReporte);
+    const texto=input?input.value.trim():'';
+    if(!texto) return;
+    if(!userSession?.email){alert('Debes iniciar sesión');return;}
+    btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
     try {
-        const { error } = await sb
-            .from('comentarios')
-            .insert({
-                id_reporte: idReporte,
-                texto: texto,
-                autor: `${userSession.nombre || ''} ${userSession.apellido || ''}`.trim(),
-                autor_email: userSession.email,
-                fecha: new Date().toISOString()
-            });
-
-        if (error) throw error;
-        input.value = '';
-        cargarComentarios(idReporte);
-    } catch (e) {
-        alert('Error al guardar la nota: ' + e.message);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-paper-plane"></i>';
-    }
+        const{error}=await sb.from('comentarios').insert({id_reporte:idReporte,texto,autor:`${userSession.nombre||''} ${userSession.apellido||''}`.trim(),autor_email:userSession.email,fecha:new Date().toISOString()});
+        if(error) throw error;
+        input.value=''; cargarComentarios(idReporte);
+    } catch(e){alert('Error al guardar la nota: '+e.message);}
+    finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i>';}
 }
 
-// ─── EVENT LISTENERS ───────────────────────────────────────
-document.getElementById('detail-modal')?.addEventListener('click', e => {
-    if (e.target.id === 'detail-modal') closeModal();
-});
-
-document.getElementById('command-palette')?.addEventListener('click', e => {
-    if (e.target.id === 'command-palette') closeCommandPalette();
-});
-
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeLightbox({ target: { id: 'photo-lightbox' } });
-    if (e.key === 'ArrowRight' && document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(1);
-    if (e.key === 'ArrowLeft' && document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(-1);
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        const activeInput = document.querySelector('[id^="comment-input-"]:focus');
-        if (activeInput) {
-            const id = activeInput.id.replace('comment-input-', '');
-            enviarComentario(id);
-        }
+document.getElementById('detail-modal')?.addEventListener('click',e=>{if(e.target.id==='detail-modal')closeModal();});
+document.getElementById('command-palette')?.addEventListener('click',e=>{if(e.target.id==='command-palette')closeCommandPalette();});
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') closeLightbox({target:{id:'photo-lightbox'}});
+    if(e.key==='ArrowRight'&&document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(1);
+    if(e.key==='ArrowLeft'&&document.getElementById('photo-lightbox').classList.contains('active')) lightboxNav(-1);
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){
+        const activeInput=document.querySelector('[id^="comment-input-"]:focus');
+        if(activeInput){const id=activeInput.id.replace('comment-input-','');enviarComentario(id);}
     }
 });
 </script>
