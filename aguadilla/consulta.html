@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="config.js"></script>
 <script>
-// Aplicar configuración del municipio dinámicamente
 (function() {
   function applyConfig() {
     const C = window.MUNICIPIO_CONFIG;
@@ -39,137 +38,127 @@
   document.addEventListener('DOMContentLoaded', applyConfig);
 })();
 </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <style>
-    :root {
-      --color-primario: #1e3a8a;
-      --color-primario-dark: #0f1f3d;
-      --color-secundario: #1e40af;
-      --color-acento: #3b82f6;
-    }
-  </style>
-  <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-  * { font-family: 'DM Sans', sans-serif; }
+<style>
+  :root {
+    --color-primario: #1e3a8a;
+    --color-primario-dark: #0f1f3d;
+    --color-secundario: #1e40af;
+    --color-acento: #3b82f6;
+  }
+</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'DM Sans', sans-serif; }
 
-  .gradient-bg {
-    background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 60%, var(--color-secundario) 100%);
-    min-height: 100vh;
-  }
+.gradient-bg {
+  background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 60%, var(--color-secundario) 100%);
+  min-height: 100vh;
+}
 
-  .glass {
-    background: rgba(255,255,255,0.07);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.15);
-  }
+.card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+}
 
-  .card {
-    background: white;
-    border-radius: 24px;
-    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
-  }
+.input-code {
+  font-family: 'DM Sans', monospace;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-align: center;
+  text-transform: uppercase;
+  border: 3px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 24px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+  color: #0f172a;
+}
+.input-code:focus { border-color: #1e40af; }
+.input-code::placeholder { color: #cbd5e1; letter-spacing: 2px; font-size: 20px; }
 
-  .input-code {
-    font-family: 'DM Sans', monospace;
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    text-align: center;
-    text-transform: uppercase;
-    border: 3px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 16px 24px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.2s;
-    color: #0f172a;
-  }
-  .input-code:focus { border-color: #1e40af; }
-  .input-code::placeholder { color: #cbd5e1; letter-spacing: 2px; font-size: 20px; }
+.btn-search {
+  background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-search:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.4); }
+.btn-search:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-  .btn-search {
-    background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
-    color: white;
-    padding: 16px 32px;
-    border-radius: 14px;
-    font-weight: 700;
-    font-size: 16px;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-  .btn-search:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.4); }
-  .btn-search:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 0; bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+.tl-item { position: relative; margin-bottom: 20px; }
+.tl-dot {
+  position: absolute;
+  left: -32px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px #e2e8f0;
+}
+.tl-dot.active { box-shadow: 0 0 0 3px #1e40af; }
 
-  /* Status timeline */
-  .timeline { position: relative; padding-left: 32px; }
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 11px; top: 0; bottom: 0;
-    width: 2px;
-    background: #e2e8f0;
-  }
-  .tl-item { position: relative; margin-bottom: 20px; }
-  .tl-dot {
-    position: absolute;
-    left: -32px;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    border: 3px solid white;
-    box-shadow: 0 0 0 2px #e2e8f0;
-  }
-  .tl-dot.active { box-shadow: 0 0 0 3px #1e40af; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.badge-nuevo     { background: #dbeafe; color: #1e40af; }
+.badge-pendiente { background: #fef3c7; color: #92400e; }
+.badge-revision  { background: #ede9fe; color: #5b21b6; }
+.badge-completo  { background: #d1fae5; color: #065f46; }
 
-  /* Status badges */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-weight: 700;
-    font-size: 13px;
-  }
-  .badge-nuevo     { background: #dbeafe; color: #1e40af; }
-  .badge-pendiente { background: #fef3c7; color: #92400e; }
-  .badge-revision  { background: #ede9fe; color: #5b21b6; }
-  .badge-completo  { background: #d1fae5; color: #065f46; }
+.progress-track { background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
 
-  /* Progress bar */
-  .progress-track { background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
-  .progress-fill  { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.5s ease-out infinite;
+  opacity: 0;
+}
 
-  /* Pulse animation for active status */
-  @keyframes pulse-ring {
-    0% { transform: scale(0.8); opacity: 1; }
-    100% { transform: scale(1.8); opacity: 0; }
-  }
-  .pulse-ring::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: pulse-ring 1.5s ease-out infinite;
-    opacity: 0;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .fade-up { animation: fadeUp 0.4s ease forwards; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease forwards; }
 </style>
 </head>
 <body class="gradient-bg">
@@ -179,7 +168,7 @@
   <!-- Header -->
   <div class="text-center mb-8">
     <a href="index.html" class="inline-flex items-center gap-3 mb-6">
-      <img src="data:image/png;base64,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" data-municipio-logo alt="Logo" class="h-12 w-auto drop-shadow-lg">
+      <img data-municipio-logo src="" alt="Logo" class="h-12 w-auto drop-shadow-lg" style="display:none">
       <span class="text-white font-bold text-lg"><span data-municipio-sistema>Aguadilla Reporta</span></span>
     </a>
     <h1 class="text-3xl md:text-4xl font-black text-white mb-2">Consulta tu Reporte</h1>
@@ -200,8 +189,8 @@
         type="text"
         id="codigo-input"
         class="input-code"
-        placeholder="AG-2026-00001"
-        maxlength="14"
+        placeholder="AG-2026-0037"
+        maxlength="13"
         oninput="formatCode(this)"
         onkeydown="if(event.key==='Enter') buscarReporte()"
       >
@@ -215,7 +204,7 @@
   </div>
 
   <!-- Result card -->
-  <div id="result-card" class="card w-full max-w-lg p-8 hidden fade-up">
+  <div id="result-card" class="card w-full max-w-lg p-8 hidden">
 
     <!-- Header result -->
     <div class="flex items-start justify-between mb-6 pb-6 border-b border-slate-100">
@@ -235,7 +224,7 @@
         <span>Nuevo</span><span>Pendiente</span><span>En Revisión</span><span>Completado</span>
       </div>
       <div class="progress-track">
-        <div class="progress-fill bg-blue-600" id="res-progress" style="width:25%"></div>
+        <div class="progress-fill bg-blue-600" id="res-progress" style="width:10%"></div>
       </div>
     </div>
 
@@ -270,7 +259,7 @@
     </div>
 
     <!-- Description -->
-    <div class="bg-blue-50 rounded-xl p-4 mb-4" id="res-desc-block">
+    <div class="bg-blue-50 rounded-xl p-4 mb-4">
       <div class="text-xs text-blue-400 font-semibold uppercase tracking-wider mb-1">Descripción</div>
       <div class="text-slate-700 text-sm leading-relaxed" id="res-descripcion">—</div>
     </div>
@@ -307,25 +296,44 @@ document.addEventListener('DOMContentLoaded', () => {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 });
 
+// ── Auto-formato con guiones: AG-2026-0037 ───────────────────────
 function formatCode(input) {
-  let v = input.value.toUpperCase().replace(/[^A-Z0-9-]/g,'');
-  input.value = v;
+  const selStart = input.selectionStart;
+  const prevLen  = input.value.length;
+
+  // Solo letras y números
+  let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  // Formato XX-XXXX-XXXX
+  let out = '';
+  if (raw.length > 0) out  = raw.substring(0, Math.min(2, raw.length));
+  if (raw.length > 2) out += '-' + raw.substring(2, Math.min(6, raw.length));
+  if (raw.length > 6) out += '-' + raw.substring(6, Math.min(10, raw.length));
+
+  input.value = out;
+
+  // Mantener cursor en posición correcta
+  const diff   = out.length - prevLen;
+  const newPos = Math.max(0, selStart + diff);
+  try { input.setSelectionRange(newPos, newPos); } catch(e) {}
 }
 
-// Auto-fill from URL param ?codigo=AG-2026-XXXXX
+// Auto-fill desde URL param ?codigo=AG-2026-0037
 const urlParam = new URLSearchParams(window.location.search).get('codigo');
 if (urlParam) {
-  document.getElementById('codigo-input').value = urlParam.toUpperCase();
-  window.addEventListener('DOMContentLoaded', () => buscarReporte());
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('codigo-input').value = urlParam.toUpperCase();
+    buscarReporte();
+  });
 }
 
 async function buscarReporte() {
-  const codigo = document.getElementById('codigo-input').value.trim().toUpperCase();
+  const codigo  = document.getElementById('codigo-input').value.trim().toUpperCase();
   const errorEl = document.getElementById('error-msg');
   errorEl.classList.add('hidden');
 
   if (!codigo || codigo.length < 5) {
-    errorEl.textContent = 'Por favor ingresa un código válido (ej: AG-2026-00001)';
+    errorEl.textContent = 'Por favor ingresa un código válido (ej: AG-2026-0037)';
     errorEl.classList.remove('hidden');
     return;
   }
@@ -335,7 +343,11 @@ async function buscarReporte() {
   btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando...';
 
   try {
-    const { data, error } = await sb.from('reportes').select('*').eq('id', codigo).single();
+    const { data, error } = await sb
+      .from('reportes')
+      .select('*')
+      .eq('id', codigo)
+      .single();
 
     if (error || !data) {
       errorEl.textContent = 'No encontramos un reporte con ese código. Verifica e intenta de nuevo.';
@@ -353,67 +365,43 @@ async function buscarReporte() {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────
-// MAPEO DE ESTATUS: cubre tanto los valores reales de BD (snake_case)
-// como posibles valores legacy con mayúsculas/espacios
-// ─────────────────────────────────────────────────────────────────
+// ── Mapeos de estatus (BD snake_case + legacy) ───────────────────
 const LABEL_MAP = {
   'nuevo':       'Nuevo',
-  'Nuevo':       'Nuevo',
   'pendiente':   'Pendiente',
-  'Pendiente':   'Pendiente',
   'en_progreso': 'En Revisión',
-  'En Revisión': 'En Revisión',
   'en_revision': 'En Revisión',
-  'En Revision': 'En Revisión',
   'resuelto':    'Completado',
-  'Completado':  'Completado',
   'completado':  'Completado'
 };
 
 const BADGE_MAP = {
   'nuevo':       'badge-nuevo',
-  'Nuevo':       'badge-nuevo',
   'pendiente':   'badge-pendiente',
-  'Pendiente':   'badge-pendiente',
   'en_progreso': 'badge-revision',
-  'En Revisión': 'badge-revision',
   'en_revision': 'badge-revision',
-  'En Revision': 'badge-revision',
   'resuelto':    'badge-completo',
-  'Completado':  'badge-completo',
   'completado':  'badge-completo'
 };
 
 const PROGRESS_MAP = {
   'nuevo':       '10%',
-  'Nuevo':       '10%',
   'pendiente':   '40%',
-  'Pendiente':   '40%',
   'en_progreso': '70%',
-  'En Revisión': '70%',
   'en_revision': '70%',
-  'En Revision': '70%',
   'resuelto':    '100%',
-  'Completado':  '100%',
   'completado':  '100%'
 };
 
 const COLOR_MAP = {
   'nuevo':       'bg-blue-500',
-  'Nuevo':       'bg-blue-500',
   'pendiente':   'bg-amber-500',
-  'Pendiente':   'bg-amber-500',
   'en_progreso': 'bg-violet-500',
-  'En Revisión': 'bg-violet-500',
   'en_revision': 'bg-violet-500',
-  'En Revision': 'bg-violet-500',
   'resuelto':    'bg-green-500',
-  'Completado':  'bg-green-500',
   'completado':  'bg-green-500'
 };
 
-// Pasos del timeline en orden, con su valor de BD y su etiqueta visible
 const TIMELINE_STEPS = [
   { value: 'nuevo',       label: 'Nuevo' },
   { value: 'pendiente',   label: 'Pendiente' },
@@ -435,35 +423,28 @@ const TL_ICONS = {
   'resuelto':    'fa-circle-check'
 };
 
-const BADGE_ICONS = {
-  'nuevo':       'fa-circle-dot',
-  'pendiente':   'fa-clock',
-  'en_progreso': 'fa-magnifying-glass',
-  'resuelto':    'fa-circle-check'
-};
-
 function mostrarResultado(r) {
   const card = document.getElementById('result-card');
 
-  // ── Basic info ──────────────────────────────────────────────
-  document.getElementById('res-codigo').textContent    = r.id || '—';
-  document.getElementById('res-categoria').textContent = r.categoria || '—';
-  document.getElementById('res-ubicacion').textContent = r.ubicacion  || '—';
-  document.getElementById('res-depto').textContent     = r.departamento || '—';
-  document.getElementById('res-descripcion').textContent = r.descripcion || '—';
+  // Info básica
+  document.getElementById('res-codigo').textContent      = r.id           || '—';
+  document.getElementById('res-categoria').textContent   = r.categoria    || '—';
+  document.getElementById('res-ubicacion').textContent   = r.ubicacion    || '—';
+  document.getElementById('res-depto').textContent       = r.departamento || '—';
+  document.getElementById('res-descripcion').textContent = r.descripcion  || '—';
 
-  // ── Estatus: leer valor RAW de la BD ────────────────────────
-  const estatusRaw   = r.estatus || 'nuevo';
-  const estatusLabel = LABEL_MAP[estatusRaw] || estatusRaw;
+  // Normalizar estatus a minúsculas para los mapeos
+  const estatusRaw   = (r.estatus || 'nuevo').toLowerCase().trim();
+  const estatusLabel = LABEL_MAP[estatusRaw] || r.estatus || 'Nuevo';
 
   document.getElementById('res-estatus').textContent = estatusLabel;
 
-  // ── Prioridad con icono ──────────────────────────────────────
+  // Prioridad
   const pIcons = { Alta: '🔴', Media: '🟡', Baja: '🟢' };
   document.getElementById('res-prioridad').textContent =
     (pIcons[r.prioridad] || '') + ' ' + (r.prioridad || '—');
 
-  // ── Fecha ────────────────────────────────────────────────────
+  // Fecha
   if (r.fecha_creacion) {
     const d = new Date(r.fecha_creacion);
     document.getElementById('res-fecha').textContent = d.toLocaleDateString('es-PR', {
@@ -471,45 +452,44 @@ function mostrarResultado(r) {
     });
   }
 
-  // ── Badge ────────────────────────────────────────────────────
-  const badge    = document.getElementById('res-badge');
-  const badgeCSS = BADGE_MAP[estatusRaw] || 'badge-nuevo';
-  const badgeIcon = BADGE_ICONS[estatusRaw] || 'fa-circle';
-  badge.className = 'badge ' + badgeCSS;
-  badge.innerHTML = `<i class="fas ${badgeIcon} text-xs"></i><span>${estatusLabel}</span>`;
+  // Badge
+  const badge = document.getElementById('res-badge');
+  badge.className = 'badge ' + (BADGE_MAP[estatusRaw] || 'badge-nuevo');
+  badge.innerHTML = `<i class="fas ${TL_ICONS[estatusRaw] || 'fa-circle'} text-xs"></i>
+                     <span>${estatusLabel}</span>`;
 
-  // ── Progress bar ─────────────────────────────────────────────
+  // Progress
   const prog = document.getElementById('res-progress');
   prog.style.width = PROGRESS_MAP[estatusRaw] || '10%';
   prog.className   = 'progress-fill ' + (COLOR_MAP[estatusRaw] || 'bg-blue-600');
 
-  // ── Timeline ─────────────────────────────────────────────────
-  // Encontrar el índice actual comparando con el valor raw de BD
-  const currentIdx = TIMELINE_STEPS.findIndex(
-    s => s.value === estatusRaw ||
-         LABEL_MAP[s.value] === estatusRaw ||
-         s.label === estatusRaw
+  // Timeline
+  const currentIdx = TIMELINE_STEPS.findIndex(s =>
+    s.value === estatusRaw ||
+    s.value.replace('_progreso','_revision') === estatusRaw
   );
 
-  const tlEl = document.getElementById('res-timeline');
-  tlEl.innerHTML = TIMELINE_STEPS.map((step, i) => {
+  document.getElementById('res-timeline').innerHTML = TIMELINE_STEPS.map((step, i) => {
     const done    = i <= currentIdx;
     const current = i === currentIdx;
     const color   = done ? TL_COLORS[step.value] : '#e2e8f0';
     const textCol = done ? '#0f172a' : '#94a3b8';
     return `
       <div class="tl-item ${done ? '' : 'opacity-40'}">
-        <div class="tl-dot ${current ? 'active pulse-ring' : ''}" style="background:${color}; color:white; position:relative;">
+        <div class="tl-dot ${current ? 'active pulse-ring' : ''}"
+             style="background:${color};color:white;position:relative;">
           <i class="fas ${TL_ICONS[step.value]}" style="font-size:9px"></i>
         </div>
         <div style="color:${textCol}">
-          <div style="font-weight:${current ? '700' : '500'};font-size:14px">${step.label}</div>
-          ${current ? `<div style="font-size:12px;color:#64748b;margin-top:2px">Estado actual</div>` : ''}
+          <div style="font-weight:${current?'700':'500'};font-size:14px">${step.label}</div>
+          ${current
+            ? '<div style="font-size:12px;color:#64748b;margin-top:2px">Estado actual</div>'
+            : ''}
         </div>
       </div>`;
   }).join('');
 
-  // ── Mostrar card ─────────────────────────────────────────────
+  // Mostrar con animación
   card.classList.remove('hidden');
   card.classList.add('fade-up');
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
