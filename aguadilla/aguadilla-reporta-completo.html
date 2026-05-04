@@ -11,15 +11,15 @@
     <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-      <style>
+    <style>
     :root {
       --color-primario: #1e3a8a;
       --color-primario-dark: #0f1f3d;
       --color-secundario: #1e40af;
       --color-acento: #3b82f6;
     }
-  </style>
-  <style>
+    </style>
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
         * { font-family: 'Inter', sans-serif; }
         
@@ -29,7 +29,6 @@
             overflow-y: auto;
         }
         
-        /* Gradient Background */
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             position: relative;
@@ -60,60 +59,81 @@
             z-index: 1;
         }
         
-        /* Fade In */
         .fade-in { animation: fadeIn 0.6s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Glass Card */
         .glass-card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
-        /* Step Indicator */
         .step { transition: all 0.3s; }
         .step.active { background: #667eea; color: white; transform: scale(1.1); }
         .step.completed { background: #22c55e; color: white; }
         
-        /* Progress Bar */
         .progress-bar {
             transition: width 0.5s ease;
             background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
         }
         
-        /* Input Focus */
         .input-focus:focus {
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
             outline: none;
         }
-        
-        /* Photo Preview */
-        .photo-preview {
+
+        /* ── Photo slots ─────────────────────────────────── */
+        .photo-slot {
             position: relative;
+            width: 100%;
+            aspect-ratio: 1;
             border-radius: 1rem;
-            overflow: hidden;
             border: 3px dashed #cbd5e1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
             transition: all 0.3s;
+            background: #f8fafc;
         }
-        
-        .photo-preview.has-image {
-            border-style: solid;
-            border-color: #22c55e;
+        .photo-slot:hover { border-color: #667eea; background: #f0f4ff; }
+        .photo-slot.filled { border-style: solid; border-color: #22c55e; }
+        .photo-slot img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
-        
-        /* Success Animation */
+        .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .photo-slot.filled .remove-btn { display: flex; }
+
+        /* ── Success animation ───────────────────────────── */
         @keyframes successPulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
         }
+        .success-pulse { animation: successPulse 0.6s ease; }
         
-        .success-pulse {
-            animation: successPulse 0.6s ease;
-        }
-        
-        /* Confetti */
         .confetti {
             position: fixed;
             width: 10px;
@@ -121,17 +141,12 @@
             background: #667eea;
             animation: confetti-fall 3s linear;
         }
-        
         @keyframes confetti-fall {
             to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
         
-        /* Mobile adjustments */
         @media (max-width: 640px) {
-            .glass-card {
-                padding: 1.5rem !important;
-                margin: 0.5rem;
-            }
+            .glass-card { padding: 1.5rem !important; margin: 0.5rem; }
         }
     </style>
 </head>
@@ -295,30 +310,43 @@
                             <textarea id="descripcion" required rows="4" class="input-focus w-full px-3 sm:px-4 py-2 sm:py-3 rounded-xl border-2 border-slate-200 transition resize-none text-sm sm:text-base" placeholder="Describe con detalle..."></textarea>
                         </div>
                         
+                        <!-- ── Fotos ── -->
                         <div>
                             <label class="block text-xs sm:text-sm font-bold text-slate-700 mb-2">
                                 <i class="fas fa-camera mr-2 text-blue-600"></i>Fotos
-                                <span class="text-slate-400 font-normal">(hasta 3)</span>
+                                <span class="text-slate-400 font-normal">(hasta 3 — cámara o galería)</span>
                             </label>
                             <div class="grid grid-cols-3 gap-3">
+                                <!-- Slot 0 -->
                                 <div class="photo-slot" id="slot-0" onclick="triggerPhoto(0)">
                                     <i class="fas fa-camera text-2xl text-slate-300 mb-1"></i>
                                     <span class="text-xs text-slate-400">Foto 1</span>
-                                    <button class="remove-btn" onclick="removePhoto(event,0)"><i class="fas fa-times"></i></button>
+                                    <button type="button" class="remove-btn" onclick="removePhoto(event,0)"><i class="fas fa-times"></i></button>
                                 </div>
+                                <!-- Slot 1 -->
                                 <div class="photo-slot" id="slot-1" onclick="triggerPhoto(1)">
                                     <i class="fas fa-camera text-2xl text-slate-300 mb-1"></i>
                                     <span class="text-xs text-slate-400">Foto 2</span>
-                                    <button class="remove-btn" onclick="removePhoto(event,1)"><i class="fas fa-times"></i></button>
+                                    <button type="button" class="remove-btn" onclick="removePhoto(event,1)"><i class="fas fa-times"></i></button>
                                 </div>
+                                <!-- Slot 2 -->
                                 <div class="photo-slot" id="slot-2" onclick="triggerPhoto(2)">
                                     <i class="fas fa-camera text-2xl text-slate-300 mb-1"></i>
                                     <span class="text-xs text-slate-400">Foto 3</span>
-                                    <button class="remove-btn" onclick="removePhoto(event,2)"><i class="fas fa-times"></i></button>
+                                    <button type="button" class="remove-btn" onclick="removePhoto(event,2)"><i class="fas fa-times"></i></button>
                                 </div>
                             </div>
-                            <input type="file" id="foto-input" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoSelected(event)">
-                            <p class="text-xs text-slate-400 mt-2"><i class="fas fa-info-circle mr-1"></i>Toca cada cuadro para agregar una foto</p>
+
+                            <!-- ── FIX: sin capture="environment" → permite cámara Y galería en iOS y Android ── -->
+                            <input type="file" id="foto-input"
+                                   accept="image/*"
+                                   class="hidden"
+                                   onchange="handlePhotoSelected(event)">
+
+                            <p class="text-xs text-slate-400 mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Toca cada cuadro para agregar una foto (cámara o galería)
+                            </p>
                         </div>
                     </div>
                     
@@ -357,6 +385,10 @@
                         <div class="border-b border-slate-200 pb-3">
                             <span class="text-slate-600 font-bold block mb-2 text-sm sm:text-base">Descripción:</span>
                             <p id="confirm-descripcion" class="text-slate-900 text-xs sm:text-sm"></p>
+                        </div>
+                        <div id="confirm-fotos-block" class="hidden">
+                            <span class="text-slate-600 font-bold block mb-2 text-sm">Fotos adjuntas:</span>
+                            <div id="confirm-fotos" class="flex gap-2 flex-wrap"></div>
                         </div>
                     </div>
                     
@@ -406,75 +438,87 @@
         </div>
     </div>
 
+    <!-- Duplicate Warning Modal -->
+    <div id="duplicate-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:16px">
+        <div style="background:white;border-radius:24px;max-width:440px;width:100%;padding:28px;box-shadow:0 25px 60px rgba(0,0,0,0.3)">
+            <div style="text-align:center;margin-bottom:20px">
+                <div style="width:64px;height:64px;background:#fffbeb;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px">⚠️</div>
+                <h3 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 8px">Posible duplicado</h3>
+                <p style="color:#64748b;font-size:14px;margin:0">Encontramos reportes similares recientes en tu área</p>
+            </div>
+            <div id="duplicate-list" style="background:#f8fafc;border-radius:14px;padding:14px;margin-bottom:20px;max-height:200px;overflow-y:auto"></div>
+            <p style="color:#64748b;font-size:13px;margin:0 0 20px;text-align:center">¿Tu reporte es diferente a los anteriores?</p>
+            <div style="display:flex;gap:10px">
+                <button onclick="cancelarReporte()" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e2e8f0;background:white;font-weight:700;font-size:14px;cursor:pointer;color:#64748b">
+                    Cancelar
+                </button>
+                <button onclick="confirmarEnvio()" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--color-primario) 0%,var(--color-secundario) 100%);color:white;font-weight:700;font-size:14px;cursor:pointer">
+                    Sí, enviar de todas formas
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="config.js"></script>
-<script>
-// Aplicar configuración del municipio dinámicamente
-(function() {
-  function applyConfig() {
-    const C = window.MUNICIPIO_CONFIG;
-    if (!C) return;
-    // CSS variables
-    const root = document.documentElement;
-    root.style.setProperty('--color-primario', C.color_primario);
-    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
-    root.style.setProperty('--color-secundario', C.color_secundario);
-    root.style.setProperty('--color-acento', C.color_acento);
-    // Meta theme-color
-    const meta = document.getElementById('theme-color-meta');
-    if (meta) meta.content = C.color_primario;
-    // Textos
-    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
-    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
-    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
-    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
-    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
-    // Email placeholder
-    document.querySelectorAll('[data-municipio-email]').forEach(el => {
-      el.placeholder = 'empleado@' + C.email_dominio;
-    });
-    // Logo
-    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
-      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
-      else { el.style.display = 'none'; }
-    });
-    // Título página
-    if (document.title.includes('Aguadilla')) {
-      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
-    }
-  }
-  // Ejecutar inmediatamente y también cuando el DOM esté listo
-  applyConfig();
-  document.addEventListener('DOMContentLoaded', applyConfig);
-})();
-</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+    (function() {
+      function applyConfig() {
+        const C = window.MUNICIPIO_CONFIG;
+        if (!C) return;
+        const root = document.documentElement;
+        root.style.setProperty('--color-primario', C.color_primario);
+        root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+        root.style.setProperty('--color-secundario', C.color_secundario);
+        root.style.setProperty('--color-acento', C.color_acento);
+        const meta = document.getElementById('theme-color-meta');
+        if (meta) meta.content = C.color_primario;
+        document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+        document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+        document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+        document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+        document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+        document.querySelectorAll('[data-municipio-email]').forEach(el => {
+          el.placeholder = 'empleado@' + C.email_dominio;
+        });
+        document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+          if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+          else { el.style.display = 'none'; }
+        });
+        if (document.title.includes('Aguadilla')) {
+          document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+        }
+      }
+      applyConfig();
+      document.addEventListener('DOMContentLoaded', applyConfig);
+    })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL  = "https://fqwstwkbusjrzcznnwiv.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
         let sb;
-        // Inicializar Supabase
+
         document.addEventListener('DOMContentLoaded', () => {
             sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         });
 
         let currentStep = 1;
-        let photoData = null; // kept for backward compat
-        let photosData = [null, null, null]; // up to 3 photos
+        // ── FIX: guardar el File object directamente, no base64 ──
+        let photoFiles = [null, null, null]; // File objects
         let activeSlot = 0;
+        let pendingFormData = null;
 
+        // ── Navigation ────────────────────────────────────────────
         function nextStep(step) {
             if (!validateStep(step)) return;
-            
             if (step === 3) updateConfirmation();
-            
             document.getElementById(`step-${step}`).classList.add('hidden');
             document.getElementById(`step-${step + 1}`).classList.remove('hidden');
-            
             const steps = document.querySelectorAll('.step');
             steps[step - 1].classList.remove('active');
             steps[step - 1].classList.add('completed');
             steps[step].classList.add('active');
-            
             currentStep = step + 1;
             updateProgress();
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -483,81 +527,56 @@
         function prevStep(step) {
             document.getElementById(`step-${step}`).classList.add('hidden');
             document.getElementById(`step-${step - 1}`).classList.remove('hidden');
-            
             const steps = document.querySelectorAll('.step');
             steps[step - 1].classList.remove('active');
             steps[step - 2].classList.add('active');
             steps[step - 2].classList.remove('completed');
-            
             currentStep = step - 1;
             updateProgress();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function updateProgress() {
-            const progress = (currentStep / 4) * 100;
-            document.getElementById('progress-bar').style.width = progress + '%';
+            document.getElementById('progress-bar').style.width = (currentStep / 4 * 100) + '%';
         }
 
+        // ── Validation ────────────────────────────────────────────
         function validateStep(step) {
             if (step === 1) {
-                const nombre = document.getElementById('nombre').value.trim();
+                const nombre   = document.getElementById('nombre').value.trim();
                 const apellido = document.getElementById('apellido').value.trim();
-                const email = document.getElementById('email').value.trim();
-                
-                if (!nombre || !apellido || !email) {
-                    alert('Completa todos los campos');
-                    return false;
-                }
-                
-                if (!email.includes('@')) {
-                    alert('Email inválido');
-                    return false;
-                }
+                const email    = document.getElementById('email').value.trim();
+                if (!nombre || !apellido || !email) { alert('Completa todos los campos'); return false; }
+                if (!email.includes('@')) { alert('Email inválido'); return false; }
             }
-            
             if (step === 2) {
                 const ubicacion = document.getElementById('ubicacion').value.trim();
-                const latitud = document.getElementById('latitud').value;
-                const longitud = document.getElementById('longitud').value;
-                
-                if (!ubicacion) {
-                    alert('Ingresa la ubicación');
-                    return false;
-                }
-                
-                if (!latitud || !longitud) {
-                    alert('Debes obtener la ubicación GPS antes de continuar');
-                    return false;
-                }
+                const latitud   = document.getElementById('latitud').value;
+                const longitud  = document.getElementById('longitud').value;
+                if (!ubicacion) { alert('Ingresa la ubicación'); return false; }
+                if (!latitud || !longitud) { alert('Debes obtener la ubicación GPS antes de continuar'); return false; }
             }
-            
             if (step === 3) {
-                const categoria = document.getElementById('categoria').value;
+                const categoria   = document.getElementById('categoria').value;
                 const descripcion = document.getElementById('descripcion').value.trim();
-                
-                if (!categoria || !descripcion) {
-                    alert('Completa categoría y descripción');
-                    return false;
-                }
+                if (!categoria || !descripcion) { alert('Completa categoría y descripción'); return false; }
             }
-            
             return true;
         }
 
+        // ── GPS ───────────────────────────────────────────────────
         function getGPS() {
             const status = document.getElementById('gps-status');
             status.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Obteniendo...';
-            
             if ('geolocation' in navigator) {
                 navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        document.getElementById('latitud').value = position.coords.latitude;
-                        document.getElementById('longitud').value = position.coords.longitude;
+                    pos => {
+                        document.getElementById('latitud').value  = pos.coords.latitude;
+                        document.getElementById('longitud').value = pos.coords.longitude;
                         status.innerHTML = '<i class="fas fa-check-circle mr-2"></i>¡Ubicación obtenida!';
                         status.classList.add('text-green-700');
                     },
-                    (error) => {
+                    () => {
                         status.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Error GPS';
                         status.classList.add('text-red-700');
                     }
@@ -568,103 +587,95 @@
             }
         }
 
+        // ── Photo handling ────────────────────────────────────────
         function triggerPhoto(slot) {
             activeSlot = slot;
             const input = document.getElementById('foto-input');
-            input.value = '';
+            input.value = '';   // reset so same file can be re-selected
             input.click();
         }
 
         function handlePhotoSelected(event) {
             const file = event.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                photosData[activeSlot] = e.target.result;
-                photoData = photosData[0]; // backward compat
-                const slot = document.getElementById('slot-' + activeSlot);
-                // Remove old image if any
-                const oldImg = slot.querySelector('img');
-                if (oldImg) oldImg.remove();
-                // Add new image
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.alt = 'Foto ' + (activeSlot + 1);
-                slot.insertBefore(img, slot.firstChild);
-                slot.classList.add('filled');
-                // Hide placeholder text
-                slot.querySelectorAll('i.fa-camera, span').forEach(el => el.style.display = 'none');
-            };
-            reader.readAsDataURL(file);
+
+            // Guardar el File object directamente (compatible iOS y Android)
+            photoFiles[activeSlot] = file;
+
+            // Mostrar preview usando URL.createObjectURL (funciona en todos los navegadores)
+            const previewUrl = URL.createObjectURL(file);
+            const slot = document.getElementById('slot-' + activeSlot);
+
+            // Limpiar imagen anterior
+            const oldImg = slot.querySelector('img');
+            if (oldImg) { URL.revokeObjectURL(oldImg.src); oldImg.remove(); }
+
+            const img = document.createElement('img');
+            img.src = previewUrl;
+            img.alt = 'Foto ' + (activeSlot + 1);
+            slot.insertBefore(img, slot.firstChild);
+            slot.classList.add('filled');
+            slot.querySelectorAll('i.fa-camera, span').forEach(el => el.style.display = 'none');
         }
 
         function removePhoto(event, slot) {
             event.stopPropagation();
-            photosData[slot] = null;
-            if (slot === 0) photoData = null;
+            photoFiles[slot] = null;
             const slotEl = document.getElementById('slot-' + slot);
             const img = slotEl.querySelector('img');
-            if (img) img.remove();
+            if (img) { URL.revokeObjectURL(img.src); img.remove(); }
             slotEl.classList.remove('filled');
             slotEl.querySelectorAll('i.fa-camera, span').forEach(el => el.style.display = '');
         }
 
-        function previewPhoto(event) {
-            handlePhotoSelected(event); // fallback
-        }
-
+        // ── Confirmation screen ───────────────────────────────────
         function updateConfirmation() {
-            document.getElementById('confirm-nombre').textContent = 
-                document.getElementById('nombre').value + ' ' + document.getElementById('apellido').value;
-            document.getElementById('confirm-email').textContent = document.getElementById('email').value;
-            document.getElementById('confirm-ubicacion').textContent = document.getElementById('ubicacion').value;
-            document.getElementById('confirm-categoria').textContent = document.getElementById('categoria').value;
-            document.getElementById('confirm-descripcion').textContent = document.getElementById('descripcion').value;
+            document.getElementById('confirm-nombre').textContent     = document.getElementById('nombre').value + ' ' + document.getElementById('apellido').value;
+            document.getElementById('confirm-email').textContent      = document.getElementById('email').value;
+            document.getElementById('confirm-ubicacion').textContent  = document.getElementById('ubicacion').value;
+            document.getElementById('confirm-categoria').textContent  = document.getElementById('categoria').value;
+            document.getElementById('confirm-descripcion').textContent= document.getElementById('descripcion').value;
+
+            // Mostrar miniaturas de fotos en confirmación
+            const fotosBlock = document.getElementById('confirm-fotos-block');
+            const fotosDiv   = document.getElementById('confirm-fotos');
+            const files = photoFiles.filter(Boolean);
+            if (files.length > 0) {
+                fotosDiv.innerHTML = '';
+                files.forEach(f => {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(f);
+                    img.className = 'w-16 h-16 object-cover rounded-lg border-2 border-green-300';
+                    fotosDiv.appendChild(img);
+                });
+                fotosBlock.classList.remove('hidden');
+            } else {
+                fotosBlock.classList.add('hidden');
+            }
         }
 
-        // Pending form data for duplicate flow
-        let pendingFormData = null;
-
-        function cancelarReporte() {
-            document.getElementById('duplicate-modal').style.display = 'none';
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Reporte';
-        }
-
-        async function confirmarEnvio() {
-            document.getElementById('duplicate-modal').style.display = 'none';
-            await enviarReporte(pendingFormData);
-        }
-
-        function getDepartamento(categoria) {
-            const mapa = {
-                'Baches / Hoyos': 'Obras Publicas',
-                'Alumbrado Público': 'Obras Publicas',
-                'Basura / Escombros': 'Ambiente',
-                'Tuberías / Agua': 'Acueductos',
-                'Señalización': 'Obras Publicas',
-                'Árboles': 'Ambiente',
-                'Animales': 'Ambiente',
-                'Infraestructura': 'Obras Publicas',
-                'Otro': 'General'
-            };
-            return mapa[categoria] || 'General';
-        }
-
-        async function subirFoto(base64Data, fileName) {
-            if (!base64Data) return null;
+        // ── Upload a single photo File to Supabase Storage ────────
+        // FIX: usa el File object directamente, no base64
+        // Esto funciona en iOS Safari, Chrome Android y todos los navegadores modernos
+        async function subirFoto(file, fileName) {
+            if (!file) return null;
             try {
-                // Convertir base64 a blob
-                const res = await fetch(base64Data);
-                const blob = await res.blob();
-                const ext = blob.type.split('/')[1] || 'jpg';
+                const ext  = file.type.split('/')[1] || 'jpg';
                 const path = `reportes/${Date.now()}_${fileName}.${ext}`;
+
                 const { data, error } = await sb.storage
                     .from('fotos-reportes')
-                    .upload(path, blob, { contentType: blob.type, upsert: true });
+                    .upload(path, file, {
+                        contentType: file.type,
+                        upsert: true
+                    });
+
                 if (error) throw error;
-                const { data: urlData } = sb.storage.from('fotos-reportes').getPublicUrl(path);
+
+                const { data: urlData } = sb.storage
+                    .from('fotos-reportes')
+                    .getPublicUrl(path);
+
                 return urlData.publicUrl;
             } catch (e) {
                 console.error('Error subiendo foto:', e);
@@ -672,43 +683,43 @@
             }
         }
 
+        // ── Submit report ─────────────────────────────────────────
         async function enviarReporte(formData) {
             const submitBtn = document.getElementById('submit-btn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...';
+
             try {
-                // Subir fotos a Supabase Storage
+                // Subir fotos en paralelo
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Subiendo fotos...';
                 const [url1, url2, url3] = await Promise.all([
-                    subirFoto(formData.foto, 'foto1'),
+                    subirFoto(formData.foto,  'foto1'),
                     subirFoto(formData.foto2, 'foto2'),
                     subirFoto(formData.foto3, 'foto3')
                 ]);
 
-                // Insertar en Supabase — el trigger genera el ID automáticamente
+                // Insertar reporte
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
                 const { data: insertData, error } = await sb.from('reportes').insert([{
-                    nombre: formData.nombre + ' ' + formData.apellido,
-                    email: formData.email,
-                    telefono: formData.telefono || '',
-                    ubicacion: formData.ubicacion,
-                    lat: formData.lat || null,
-                    lng: formData.lng || null,
-                    categoria: formData.categoria,
+                    nombre:      formData.nombre + ' ' + formData.apellido,
+                    email:       formData.email,
+                    telefono:    formData.telefono || '',
+                    ubicacion:   formData.ubicacion,
+                    lat:         formData.lat  || null,
+                    lng:         formData.lng  || null,
+                    categoria:   formData.categoria,
                     departamento: getDepartamento(formData.categoria),
                     descripcion: formData.descripcion,
-                    fotos: [url1, url2, url3].filter(Boolean),
-                    estatus: 'nuevo',
-                    prioridad: 'Media'
+                    fotos:       [url1, url2, url3].filter(Boolean),
+                    estatus:     'nuevo',
+                    prioridad:   'Media'
                 }])
                 .select('id')
                 .single();
 
                 if (error) throw error;
 
-                // Usar el ID real generado por el trigger (ej: AG-0001)
                 const trackingCode = insertData.id;
-
                 document.getElementById('tracking-code').textContent = trackingCode;
                 const tLink = document.getElementById('tracking-link');
                 if (tLink) tLink.href = 'consulta.html?codigo=' + encodeURIComponent(trackingCode);
@@ -723,6 +734,7 @@
             }
         }
 
+        // ── Form submit ───────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('report-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -731,21 +743,21 @@
                 submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Verificando...';
 
                 const formData = {
-                    nombre: document.getElementById('nombre').value,
-                    apellido: document.getElementById('apellido').value,
-                    email: document.getElementById('email').value,
-                    telefono: document.getElementById('telefono').value,
-                    ubicacion: document.getElementById('ubicacion').value,
-                    lat: document.getElementById('latitud').value,
-                    lng: document.getElementById('longitud').value,
-                    categoria: document.getElementById('categoria').value,
+                    nombre:      document.getElementById('nombre').value,
+                    apellido:    document.getElementById('apellido').value,
+                    email:       document.getElementById('email').value,
+                    telefono:    document.getElementById('telefono').value,
+                    ubicacion:   document.getElementById('ubicacion').value,
+                    lat:         document.getElementById('latitud').value,
+                    lng:         document.getElementById('longitud').value,
+                    categoria:   document.getElementById('categoria').value,
                     descripcion: document.getElementById('descripcion').value,
-                    foto: photosData[0] || '',
-                    foto2: photosData[1] || '',
-                    foto3: photosData[2] || '',
+                    foto:        photoFiles[0] || null,
+                    foto2:       photoFiles[1] || null,
+                    foto3:       photoFiles[2] || null,
                 };
 
-                // Verificar duplicados en Supabase
+                // Verificar duplicados
                 try {
                     const hace48h = new Date(Date.now() - 48*60*60*1000).toISOString();
                     const { data: duplicados } = await sb.from('reportes')
@@ -777,43 +789,50 @@
             });
         });
 
+        // ── Duplicate modal actions ───────────────────────────────
+        function cancelarReporte() {
+            document.getElementById('duplicate-modal').style.display = 'none';
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Enviar Reporte';
+        }
+
+        async function confirmarEnvio() {
+            document.getElementById('duplicate-modal').style.display = 'none';
+            await enviarReporte(pendingFormData);
+        }
+
+        // ── Helpers ───────────────────────────────────────────────
+        function getDepartamento(categoria) {
+            const mapa = {
+                'Baches / Hoyos':    'Obras Publicas',
+                'Alumbrado Público': 'Obras Publicas',
+                'Basura / Escombros':'Ambiente',
+                'Tuberías / Agua':   'Acueductos',
+                'Señalización':      'Obras Publicas',
+                'Árboles':           'Ambiente',
+                'Animales':          'Ambiente',
+                'Infraestructura':   'Obras Publicas',
+                'Otro':              'General'
+            };
+            return mapa[categoria] || 'General';
+        }
+
         function createConfetti() {
-            const colors = ['#667eea', '#764ba2', '#22c55e', '#f59e0b', '#ef4444'];
+            const colors = ['#667eea','#764ba2','#22c55e','#f59e0b','#ef4444'];
             for (let i = 0; i < 50; i++) {
                 setTimeout(() => {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + '%';
-                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                    confetti.style.animationDelay = Math.random() * 2 + 's';
-                    document.body.appendChild(confetti);
-                    
-                    setTimeout(() => confetti.remove(), 3000);
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + '%';
+                    c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    c.style.animationDelay = Math.random() * 2 + 's';
+                    document.body.appendChild(c);
+                    setTimeout(() => c.remove(), 3000);
                 }, i * 30);
             }
         }
     </script>
-
-    <!-- Duplicate Warning Modal -->
-    <div id="duplicate-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;padding:16px">
-        <div style="background:white;border-radius:24px;max-width:440px;width:100%;padding:28px;box-shadow:0 25px 60px rgba(0,0,0,0.3)">
-            <div style="text-align:center;margin-bottom:20px">
-                <div style="width:64px;height:64px;background:#fffbeb;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:28px">⚠️</div>
-                <h3 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 8px">Posible duplicado</h3>
-                <p style="color:#64748b;font-size:14px;margin:0">Encontramos reportes similares recientes en tu área</p>
-            </div>
-            <div id="duplicate-list" style="background:#f8fafc;border-radius:14px;padding:14px;margin-bottom:20px;max-height:200px;overflow-y:auto"></div>
-            <p style="color:#64748b;font-size:13px;margin:0 0 20px;text-align:center">¿Tu reporte es diferente a los anteriores?</p>
-            <div style="display:flex;gap:10px">
-                <button onclick="cancelarReporte()" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e2e8f0;background:white;font-weight:700;font-size:14px;cursor:pointer;color:#64748b">
-                    Cancelar
-                </button>
-                <button onclick="confirmarEnvio()" style="flex:1;padding:12px;border-radius:12px;border:none;background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);color:white;font-weight:700;font-size:14px;cursor:pointer">
-                    Sí, enviar de todas formas
-                </button>
-            </div>
-        </div>
-    </div>
 
 </body>
 </html>
