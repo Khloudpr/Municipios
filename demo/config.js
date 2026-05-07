@@ -12,5 +12,5 @@ const MUNICIPIO_CONFIG = {
   logo_url: "",
   mapa_lat: 18.2208,
   mapa_lng: -66.5901,
-  mapa_zoom: 13
+  mapa_zoom: 14
 };
