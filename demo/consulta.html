@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="config.js"></script>
+<script>
+(function() {
+  function applyConfig() {
+    const C = window.MUNICIPIO_CONFIG;
+    if (!C) return;
+    const root = document.documentElement;
+    root.style.setProperty('--color-primario', C.color_primario);
+    root.style.setProperty('--color-primario-dark', C.color_primario_dark);
+    root.style.setProperty('--color-secundario', C.color_secundario);
+    root.style.setProperty('--color-acento', C.color_acento);
+    const meta = document.getElementById('theme-color-meta');
+    if (meta) meta.content = C.color_primario;
+    document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
+    document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
+    document.querySelectorAll('[data-municipio-descripcion]').forEach(el => el.textContent = C.descripcion);
+    document.querySelectorAll('[data-municipio-footer]').forEach(el => el.textContent = C.footer_texto);
+    document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
+    document.querySelectorAll('[data-municipio-email]').forEach(el => {
+      el.placeholder = 'empleado@' + C.email_dominio;
+    });
+    document.querySelectorAll('[data-municipio-logo]').forEach(el => {
+      if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    });
+    if (document.title.includes('Aguadilla')) {
+      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    }
+  }
+  applyConfig();
+  document.addEventListener('DOMContentLoaded', applyConfig);
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --color-primario: #1e3a8a;
+    --color-primario-dark: #0f1f3d;
+    --color-secundario: #1e40af;
+    --color-acento: #3b82f6;
+  }
+</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
+* { font-family: 'DM Sans', sans-serif; }
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--color-primario-dark) 0%, var(--color-primario) 60%, var(--color-secundario) 100%);
+  min-height: 100vh;
+}
+
+.card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+}
+
+.input-code {
+  font-family: 'DM Sans', monospace;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-align: center;
+  text-transform: uppercase;
+  border: 3px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px 24px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+  color: #0f172a;
+}
+.input-code:focus { border-color: #1e40af; }
+.input-code::placeholder { color: #cbd5e1; letter-spacing: 2px; font-size: 20px; }
+
+.btn-search {
+  background: linear-gradient(135deg, var(--color-primario) 0%, var(--color-secundario) 100%);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.btn-search:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.4); }
+.btn-search:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px; top: 0; bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+.tl-item { position: relative; margin-bottom: 20px; }
+.tl-dot {
+  position: absolute;
+  left: -32px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px #e2e8f0;
+}
+.tl-dot.active { box-shadow: 0 0 0 3px #1e40af; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.badge-nuevo     { background: #dbeafe; color: #1e40af; }
+.badge-pendiente { background: #fef3c7; color: #92400e; }
+.badge-revision  { background: #ede9fe; color: #5b21b6; }
+.badge-completo  { background: #d1fae5; color: #065f46; }
+
+.progress-track { background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
+.progress-fill  { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.5s ease-out infinite;
+  opacity: 0;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+</style>
+</head>
+<body class="gradient-bg">
+
+<div class="min-h-screen flex flex-col items-center justify-center p-4 py-12">
+
+  <!-- Header -->
+  <div class="text-center mb-8">
+    <a href="index.html" class="inline-flex items-center gap-3 mb-6">
+      <img data-municipio-logo src="" alt="Logo" class="h-12 w-auto drop-shadow-lg" style="display:none">
+      <span class="text-white font-bold text-lg"><span data-municipio-sistema>Aguadilla Reporta</span></span>
+    </a>
+    <h1 class="text-3xl md:text-4xl font-black text-white mb-2">Consulta tu Reporte</h1>
+    <p class="text-white/70">Ingresa tu código para ver el estado en tiempo real</p>
+  </div>
+
+  <!-- Search card -->
+  <div class="card w-full max-w-md p-8 mb-6">
+    <div class="text-center mb-6">
+      <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-search text-blue-600 text-xl"></i>
+      </div>
+      <p class="text-slate-500 text-sm">El código fue enviado a tu email al hacer el reporte</p>
+    </div>
+
+    <div class="mb-4">
+      <input
+        type="text"
+        id="codigo-input"
+        class="input-code"
+        placeholder="AG-2026-0037"
+        maxlength="13"
+        oninput="formatCode(this)"
+        onkeydown="if(event.key==='Enter') buscarReporte()"
+      >
+    </div>
+
+    <button class="btn-search" id="btn-buscar" onclick="buscarReporte()">
+      <i class="fas fa-search"></i> Consultar Estado
+    </button>
+
+    <div id="error-msg" class="mt-4 text-center text-red-500 text-sm font-semibold hidden"></div>
+  </div>
+
+  <!-- Result card -->
+  <div id="result-card" class="card w-full max-w-lg p-8 hidden">
+
+    <!-- Header result -->
+    <div class="flex items-start justify-between mb-6 pb-6 border-b border-slate-100">
+      <div>
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Código de reporte</div>
+        <div class="text-2xl font-black text-slate-900 tracking-wider" id="res-codigo">—</div>
+      </div>
+      <div id="res-badge" class="badge badge-nuevo">
+        <i class="fas fa-circle text-xs"></i>
+        <span id="res-estatus">Nuevo</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="mb-6">
+      <div class="flex justify-between text-xs text-slate-400 font-semibold mb-2">
+        <span>Nuevo</span><span>Pendiente</span><span>En Revisión</span><span>Completado</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill bg-blue-600" id="res-progress" style="width:10%"></div>
+      </div>
+    </div>
+
+    <!-- Details grid -->
+    <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-slate-50 rounded-xl p-4">
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Categoría</div>
+        <div class="font-bold text-slate-800 text-sm" id="res-categoria">—</div>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-4">
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Prioridad</div>
+        <div class="font-bold text-slate-800 text-sm" id="res-prioridad">—</div>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-4 col-span-2">
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Ubicación</div>
+        <div class="font-bold text-slate-800 text-sm" id="res-ubicacion">—</div>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-4">
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Fecha reportado</div>
+        <div class="font-bold text-slate-800 text-sm" id="res-fecha">—</div>
+      </div>
+      <div class="bg-slate-50 rounded-xl p-4">
+        <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Departamento</div>
+        <div class="font-bold text-slate-800 text-sm" id="res-depto">—</div>
+      </div>
+    </div>
+
+    <!-- Status timeline -->
+    <div class="mb-6">
+      <div class="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-4">Historial de estados</div>
+      <div class="timeline" id="res-timeline"></div>
+    </div>
+
+    <!-- Description -->
+    <div class="bg-blue-50 rounded-xl p-4 mb-4">
+      <div class="text-xs text-blue-400 font-semibold uppercase tracking-wider mb-1">Descripción</div>
+      <div class="text-slate-700 text-sm leading-relaxed" id="res-descripcion">—</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+      <a href="aguadilla-reporta-completo.html" class="text-sm text-blue-600 font-semibold hover:underline">
+        <i class="fas fa-plus mr-1"></i> Nuevo reporte
+      </a>
+      <!-- Actualizar: re-consulta el mismo código sin salir de la página -->
+      <button onclick="buscarReporte()" class="text-sm text-slate-400 hover:text-slate-600 font-semibold">
+        <i class="fas fa-sync-alt mr-1"></i> Actualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- Back link -->
+  <div class="mt-6 flex gap-6">
+    <a href="index.html" class="text-white/50 hover:text-white text-sm transition">
+      <i class="fas fa-arrow-left mr-1"></i> Inicio
+    </a>
+    <a href="mis-reportes.html" class="text-white/70 hover:text-white text-sm transition font-semibold">
+      <i class="fas fa-list mr-1"></i> Ver todos mis reportes
+    </a>
+  </div>
+
+</div>
+
+<script>
+const SUPABASE_URL = "https://fqwstwkbusjrzcznnwiv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxd3N0d2tidXNqcnpjem5ud2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5OTI1OTgsImV4cCI6MjA5MDU2ODU5OH0.qeFlDHW7T8-xd3crCDnP2a57qu52TrfVaWQ7DSMJMwo";
+let sb;
+
+// Inicializar Supabase cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+});
+
+// ── Auto-formato: AG-2026-0037 ───────────────────────────────────
+function formatCode(input) {
+  const selStart = input.selectionStart;
+  const prevLen  = input.value.length;
+
+  let raw = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  let out = '';
+  if (raw.length > 0) out  = raw.substring(0, Math.min(2, raw.length));
+  if (raw.length > 2) out += '-' + raw.substring(2, Math.min(6, raw.length));
+  if (raw.length > 6) out += '-' + raw.substring(6, Math.min(10, raw.length));
+
+  input.value = out;
+
+  const diff   = out.length - prevLen;
+  const newPos = Math.max(0, selStart + diff);
+  try { input.setSelectionRange(newPos, newPos); } catch(e) {}
+}
+
+// Auto-fill desde URL param ?codigo=AG-2026-0037
+const urlParam = new URLSearchParams(window.location.search).get('codigo');
+if (urlParam) {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('codigo-input').value = urlParam.toUpperCase();
+    buscarReporte();
+  });
+}
+
+async function buscarReporte() {
+  const codigo  = document.getElementById('codigo-input').value.trim().toUpperCase();
+  const errorEl = document.getElementById('error-msg');
+  errorEl.classList.add('hidden');
+
+  if (!codigo || codigo.length < 5) {
+    errorEl.textContent = 'Por favor ingresa un código válido (ej: AG-2026-0037)';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  // Asegurarse que sb esté inicializado
+  if (!sb) {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  const btn = document.getElementById('btn-buscar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultando...';
+
+  try {
+    const { data, error } = await sb
+      .from('reportes')
+      .select('*')
+      .eq('id', codigo)
+      .single();
+
+    if (error || !data) {
+      errorEl.textContent = 'No encontramos un reporte con ese código. Verifica e intenta de nuevo.';
+      errorEl.classList.remove('hidden');
+      document.getElementById('result-card').classList.add('hidden');
+    } else {
+      mostrarResultado(data);
+    }
+  } catch(e) {
+    errorEl.textContent = 'Error de conexión. Intenta nuevamente.';
+    errorEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-search"></i> Consultar Estado';
+  }
+}
+
+// ── Mapeos de estatus ────────────────────────────────────────────
+const LABEL_MAP = {
+  'nuevo':       'Nuevo',
+  'pendiente':   'Pendiente',
+  'en_progreso': 'En Revisión',
+  'en_revision': 'En Revisión',
+  'resuelto':    'Completado',
+  'completado':  'Completado'
+};
+
+const BADGE_MAP = {
+  'nuevo':       'badge-nuevo',
+  'pendiente':   'badge-pendiente',
+  'en_progreso': 'badge-revision',
+  'en_revision': 'badge-revision',
+  'resuelto':    'badge-completo',
+  'completado':  'badge-completo'
+};
+
+const PROGRESS_MAP = {
+  'nuevo':       '10%',
+  'pendiente':   '40%',
+  'en_progreso': '70%',
+  'en_revision': '70%',
+  'resuelto':    '100%',
+  'completado':  '100%'
+};
+
+const COLOR_MAP = {
+  'nuevo':       'bg-blue-500',
+  'pendiente':   'bg-amber-500',
+  'en_progreso': 'bg-violet-500',
+  'en_revision': 'bg-violet-500',
+  'resuelto':    'bg-green-500',
+  'completado':  'bg-green-500'
+};
+
+const TIMELINE_STEPS = [
+  { value: 'nuevo',       label: 'Nuevo' },
+  { value: 'pendiente',   label: 'Pendiente' },
+  { value: 'en_progreso', label: 'En Revisión' },
+  { value: 'resuelto',    label: 'Completado' }
+];
+
+const TL_COLORS = {
+  'nuevo':       '#3b82f6',
+  'pendiente':   '#f59e0b',
+  'en_progreso': '#8b5cf6',
+  'resuelto':    '#10b981'
+};
+
+const TL_ICONS = {
+  'nuevo':       'fa-circle-dot',
+  'pendiente':   'fa-clock',
+  'en_progreso': 'fa-magnifying-glass',
+  'resuelto':    'fa-circle-check'
+};
+
+function mostrarResultado(r) {
+  const card = document.getElementById('result-card');
+
+  document.getElementById('res-codigo').textContent      = r.id           || '—';
+  document.getElementById('res-categoria').textContent   = r.categoria    || '—';
+  document.getElementById('res-ubicacion').textContent   = r.ubicacion    || '—';
+  document.getElementById('res-depto').textContent       = r.departamento || '—';
+  document.getElementById('res-descripcion').textContent = r.descripcion  || '—';
+
+  const estatusRaw   = (r.estatus || 'nuevo').toLowerCase().trim();
+  const estatusLabel = LABEL_MAP[estatusRaw] || r.estatus || 'Nuevo';
+
+  document.getElementById('res-estatus').textContent = estatusLabel;
+
+  const pIcons = { Alta: '🔴', Media: '🟡', Baja: '🟢' };
+  document.getElementById('res-prioridad').textContent =
+    (pIcons[r.prioridad] || '') + ' ' + (r.prioridad || '—');
+
+  if (r.fecha_creacion) {
+    const d = new Date(r.fecha_creacion);
+    document.getElementById('res-fecha').textContent = d.toLocaleDateString('es-PR', {
+      year: 'numeric', month: 'long', day: 'numeric'
+    });
+  }
+
+  // Badge
+  const badge = document.getElementById('res-badge');
+  badge.className = 'badge ' + (BADGE_MAP[estatusRaw] || 'badge-nuevo');
+  badge.innerHTML = `<i class="fas ${TL_ICONS[estatusRaw] || 'fa-circle'} text-xs"></i>
+                     <span>${estatusLabel}</span>`;
+
+  // Progress
+  const prog = document.getElementById('res-progress');
+  prog.style.width = PROGRESS_MAP[estatusRaw] || '10%';
+  prog.className   = 'progress-fill ' + (COLOR_MAP[estatusRaw] || 'bg-blue-600');
+
+  // Timeline
+  const currentIdx = TIMELINE_STEPS.findIndex(s =>
+    s.value === estatusRaw ||
+    s.value.replace('_progreso', '_revision') === estatusRaw
+  );
+
+  document.getElementById('res-timeline').innerHTML = TIMELINE_STEPS.map((step, i) => {
+    const done    = i <= currentIdx;
+    const current = i === currentIdx;
+    const color   = done ? TL_COLORS[step.value] : '#e2e8f0';
+    const textCol = done ? '#0f172a' : '#94a3b8';
+    return `
+      <div class="tl-item ${done ? '' : 'opacity-40'}">
+        <div class="tl-dot ${current ? 'active pulse-ring' : ''}"
+             style="background:${color};color:white;position:relative;">
+          <i class="fas ${TL_ICONS[step.value]}" style="font-size:9px"></i>
+        </div>
+        <div style="color:${textCol}">
+          <div style="font-weight:${current?'700':'500'};font-size:14px">${step.label}</div>
+          ${current
+            ? '<div style="font-size:12px;color:#64748b;margin-top:2px">Estado actual</div>'
+            : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Mostrar card sin animación al actualizar (ya visible)
+  card.classList.remove('hidden');
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+</script>
+</body>
+</html>
