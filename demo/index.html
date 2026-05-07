@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Aguadilla Reporta">
+    <meta name="apple-mobile-web-app-title" content="Demo Reporta">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -540,7 +540,7 @@
                 </p>
                 <h4 class="font-bold text-lg mt-4 mb-2">1. Aceptación de Términos</h4>
                 <p class="text-slate-600">
-                    Al utilizar Aguadilla Reporta, usted acepta estos términos de uso. Si no está de acuerdo, 
+                    Al utilizar Municipio Reporta, usted acepta estos términos de uso. Si no está de acuerdo, 
                     por favor no utilice el servicio.
                 </p>
                 <h4 class="font-bold text-lg mt-4 mb-2">2. Uso Apropiado</h4>
@@ -778,8 +778,7 @@
       else { el.style.display = 'none'; }
     });
     // Título página
-    if (document.title.includes('Aguadilla')) {
-      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
+    document.title = C.sistema;
     }
   }
   // Ejecutar inmediatamente y también cuando el DOM esté listo
