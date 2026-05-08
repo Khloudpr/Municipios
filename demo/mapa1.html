@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
+    <title id="page-title"><span data-municipio-sistema>Demo Reporta</span></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -26,9 +26,7 @@
         document.querySelectorAll('[data-municipio-sistema]').forEach(el => el.textContent = C.sistema);
         document.querySelectorAll('[data-municipio-nombre]').forEach(el => el.textContent = C.nombre);
         document.querySelectorAll('[data-municipio-iniciales]').forEach(el => el.textContent = C.iniciales);
-        if (document.title.includes('Aguadilla')) {
-          document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
-        }
+        document.title = C.sistema;
       }
       applyConfig();
       document.addEventListener('DOMContentLoaded', applyConfig);
@@ -136,7 +134,7 @@
         <button onclick="toggleMobileMenu()" class="md:hidden absolute top-4 right-4 text-white text-2xl"><i class="fas fa-times"></i></button>
         <div class="flex items-center gap-3 mb-12">
             <div class="bg-white text-blue-900 p-1.5 rounded-lg font-black text-xl shadow-lg"><span data-municipio-iniciales>AR</span></div>
-            <span class="font-black text-xl uppercase italic tracking-tighter">Aguadilla</span>
+            <span class="font-black text-xl uppercase italic tracking-tighter" data-municipio-nombre>Demo Municipal</span>
         </div>
         <nav class="space-y-6 flex-1">
             <a href="dashboard1.html" class="sidebar-link flex items-center gap-4 opacity-70 hover:opacity-100 transition-all p-2"><i class="fas fa-chart-pie w-6 text-lg"></i> DASHBOARD<kbd class="ml-auto text-[9px] bg-blue-800 px-2 py-1 rounded opacity-50">G</kbd></a>
@@ -223,7 +221,7 @@
 
         <footer class="mt-auto pt-6 border-t-2 border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 px-4">
             <div>
-                <h2 class="font-black text-xl md:text-2xl text-blue-900 uppercase italic"><span data-municipio-nombre>Municipio de Aguadilla</span></h2>
+                <h2 class="font-black text-xl md:text-2xl text-blue-900 uppercase italic"><span data-municipio-nombre>Demo Municipal</span></h2>
                 <p class="text-slate-400 font-bold text-[10px] tracking-[0.4em] uppercase">El Jardin del Atlantico</p>
             </div>
             <div class="flex flex-col items-end gap-1">
