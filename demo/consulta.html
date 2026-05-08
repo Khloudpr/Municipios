@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title"><span data-municipio-sistema>Aguadilla Reporta</span></title>
+<title id="page-title"><span data-municipio-sistema>Demo Reporta</span></title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="config.js"></script>
 <script>
@@ -30,9 +30,7 @@
       if (C.logo_url) { el.src = C.logo_url; el.style.display = ''; }
       else { el.style.display = 'none'; }
     });
-    if (document.title.includes('Aguadilla')) {
-      document.title = document.title.replace('Aguadilla Reporta', C.sistema).replace('Aguadilla', C.nombre);
-    }
+    document.title = C.sistema;
   }
   applyConfig();
   document.addEventListener('DOMContentLoaded', applyConfig);
@@ -169,7 +167,7 @@
   <div class="text-center mb-8">
     <a href="index.html" class="inline-flex items-center gap-3 mb-6">
       <img data-municipio-logo src="" alt="Logo" class="h-12 w-auto drop-shadow-lg" style="display:none">
-      <span class="text-white font-bold text-lg"><span data-municipio-sistema>Aguadilla Reporta</span></span>
+      <span class="text-white font-bold text-lg"><span data-municipio-sistema>Demo Reporta</span></span>
     </a>
     <h1 class="text-3xl md:text-4xl font-black text-white mb-2">Consulta tu Reporte</h1>
     <p class="text-white/70">Ingresa tu código para ver el estado en tiempo real</p>
@@ -189,7 +187,7 @@
         type="text"
         id="codigo-input"
         class="input-code"
-        placeholder="AG-2026-0037"
+        placeholder="DM-2026-0037"
         maxlength="13"
         oninput="formatCode(this)"
         onkeydown="if(event.key==='Enter') buscarReporte()"
@@ -269,7 +267,6 @@
       <a href="reporta-completo.html" class="text-sm text-blue-600 font-semibold hover:underline">
         <i class="fas fa-plus mr-1"></i> Nuevo reporte
       </a>
-      <!-- Actualizar: re-consulta el mismo código sin salir de la página -->
       <button onclick="buscarReporte()" class="text-sm text-slate-400 hover:text-slate-600 font-semibold">
         <i class="fas fa-sync-alt mr-1"></i> Actualizar
       </button>
@@ -293,12 +290,10 @@ const SUPABASE_URL = "https://fuqewniyquxqdnivcuvc.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ1cWV3bml5cXV4cWRuaXZjdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzM1NDcsImV4cCI6MjA5Mzc0OTU0N30.4L3KUI03jbaBqNz5zjZSCySE_dT8xlEQc-6lB4aubfU";
 let sb;
 
-// Inicializar Supabase cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 });
 
-// ── Auto-formato: AG-2026-0037 ───────────────────────────────────
 function formatCode(input) {
   const selStart = input.selectionStart;
   const prevLen  = input.value.length;
@@ -317,7 +312,6 @@ function formatCode(input) {
   try { input.setSelectionRange(newPos, newPos); } catch(e) {}
 }
 
-// Auto-fill desde URL param ?codigo=AG-2026-0037
 const urlParam = new URLSearchParams(window.location.search).get('codigo');
 if (urlParam) {
   document.addEventListener('DOMContentLoaded', () => {
@@ -332,12 +326,11 @@ async function buscarReporte() {
   errorEl.classList.add('hidden');
 
   if (!codigo || codigo.length < 5) {
-    errorEl.textContent = 'Por favor ingresa un código válido (ej: AG-2026-0037)';
+    errorEl.textContent = 'Por favor ingresa un código válido (ej: DM-2026-0037)';
     errorEl.classList.remove('hidden');
     return;
   }
 
-  // Asegurarse que sb esté inicializado
   if (!sb) {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
@@ -369,7 +362,6 @@ async function buscarReporte() {
   }
 }
 
-// ── Mapeos de estatus ────────────────────────────────────────────
 const LABEL_MAP = {
   'nuevo':       'Nuevo',
   'pendiente':   'Pendiente',
@@ -452,18 +444,15 @@ function mostrarResultado(r) {
     });
   }
 
-  // Badge
   const badge = document.getElementById('res-badge');
   badge.className = 'badge ' + (BADGE_MAP[estatusRaw] || 'badge-nuevo');
   badge.innerHTML = `<i class="fas ${TL_ICONS[estatusRaw] || 'fa-circle'} text-xs"></i>
                      <span>${estatusLabel}</span>`;
 
-  // Progress
   const prog = document.getElementById('res-progress');
   prog.style.width = PROGRESS_MAP[estatusRaw] || '10%';
   prog.className   = 'progress-fill ' + (COLOR_MAP[estatusRaw] || 'bg-blue-600');
 
-  // Timeline
   const currentIdx = TIMELINE_STEPS.findIndex(s =>
     s.value === estatusRaw ||
     s.value.replace('_progreso', '_revision') === estatusRaw
@@ -489,7 +478,6 @@ function mostrarResultado(r) {
       </div>`;
   }).join('');
 
-  // Mostrar card sin animación al actualizar (ya visible)
   card.classList.remove('hidden');
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
